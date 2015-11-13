@@ -1,0 +1,15 @@
+{
+  "@context": {
+    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "subclassof": {
+      "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "@type": "@id"
+    },
+    "graph": "@graph",
+    "id": "@id",
+    "type": "@type",
+    "edge": {"@type": "@id"},
+    "end": {"@type": "@id"},
+    "start": {"@type": "@id"}
+  }
+}

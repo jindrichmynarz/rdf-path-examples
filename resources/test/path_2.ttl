@@ -1,0 +1,27 @@
+@prefix :     <http://purl.org/lodsight/rdf-path#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix gr:   <http://purl.org/goodrelations/v1#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<#e0> rdfs:subClassOf gr:BusinessEntity .
+
+<#e1> rdfs:subClassOf foaf:Document .
+
+<#e2> rdfs:subClassOf xsd:string .
+
+_:p1 a :Path ;
+  :start <#e0> ;
+  :edge foaf:page ;
+  :end <#e1> .
+
+_:p2 a :Path ;
+  :start <#e1> ;
+  :edge rdfs:label ;
+  :end <#e2> .
+
+gr:BusinessEntity a rdfs:Class .
+
+foaf:Document a rdfs:Class .
+
+xsd:string a rdfs:Datatype .

@@ -1,0 +1,51 @@
+{
+  "@context": {
+    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "gr": "http://purl.org/goodrelations/v1#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rdfs:subClassOf": {"@type": "@id"},
+    "edge": {"@type": "@id"},
+    "end": {"@type": "@id"},
+    "start": {"@type": "@id"}
+  },
+  "@graph": [
+    {
+      "@id": "#e0",
+      "rdfs:subClassOf": "gr:BusinessEntity"
+    },
+    {
+      "@id": "#e1",
+      "rdfs:subClassOf": "foaf:Document"
+    },
+    {
+      "@id": "#e2",
+      "rdfs:subClassOf": "xsd:string"
+    },
+    {
+      "@type": "Path",
+      "start": "#e0",
+      "edge": "foaf:page",
+      "end": "#e1"
+    },
+    {
+      "@type": "Path",
+      "start": "#e1",
+      "edge": "rdfs:label",
+      "end": "#e2"
+    },
+    {
+      "@id": "gr:BusinessEntity",
+      "@type": "rdfs:Class"
+    },
+    {
+      "@id": "foaf:Document",
+      "@type": "rdfs:Class"
+    },
+    {
+      "@id": "xsd:string",
+      "@type": "rdfs:Datatype"
+    }
+  ]
+}
