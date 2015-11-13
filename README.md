@@ -18,9 +18,9 @@ var config = {
 };
 ```
 
-The only currently supported selection method is `random`, which simply retrieves random examples of the supplied path's instantiations.
+`sparql-endpoint` attribute must provide a URL of a SPARQL endpoint allows to retrieve query results serialized in JSON and JSON-LD via JSON-P (e.g., [OpenLink Virtuoso](https://github.com/openlink/virtuoso-opensource)). `graph-iri` is the IRI of the named graph from which instances of the provided RDF path will be retrieved. The only currently supported selection method is `random`, which simply retrieves random examples of the supplied path's instantiations.
 
-`path` is an RDF path serialized in [JSON-LD](http://json-ld.org/) using the [RDF Path vocabulary](https://github.com/jindrichmynarz/rdf-path-examples/blob/master/resources/rdf_path.ttl). For example, here is a path from `gr:BusinessEntity` to `xsd:string` via `foaf:page`:
+`path` is a JavaScript object representing an RDF path serialized in [JSON-LD](http://json-ld.org/) using the [RDF Path vocabulary](https://github.com/jindrichmynarz/rdf-path-examples/blob/master/resources/rdf_path.ttl). For example, here is a path from `gr:BusinessEntity` to `xsd:string` via `foaf:page`:
 
 ```js
 {
