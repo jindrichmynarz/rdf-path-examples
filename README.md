@@ -73,8 +73,8 @@ callback(examples);
 ```js
 var examples = [
   ["http://linked.opendata.cz/resource/business-entity/7d179039-1f42-4559-90ea-8a624606e663",
-  "http://xmlns.com/foaf/0.1/page",
-  "http://www.strabag.cz"],
+   "http://xmlns.com/foaf/0.1/page",
+   "http://www.strabag.cz"],
   ["http://linked.opendata.cz/resource/business-entity/b1672053-e4d6-40fb-b76b-1393a8e1390f",
    "http://xmlns.com/foaf/0.1/page",
    "www.mfcr.cz"]
