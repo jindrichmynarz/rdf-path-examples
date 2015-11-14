@@ -6,6 +6,7 @@
 @prefix schema:  <http://schema.org/> .
 @prefix vann:    <http://purl.org/vocab/vann/> .
 @prefix voaf:    <http://purl.org/vocommons/voaf#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 
 <http://purl.org/lodsight/rdf-path> a voaf:Vocabulary ;
   rdfs:label "RDF Path Vocabulary"@en ;
@@ -26,26 +27,45 @@
   rdfs:comment "Path in an RDF graph"@en ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
+:Step a rdfs:Class ;
+  rdfs:label "Step"@en ;
+  rdfs:comment "Step in an RDF path"@en ;
+  rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
+
 # ----- Properties -----
+
+:hasStep a rdf:Property, owl:ObjectProperty ;
+  rdfs:label "Has step"@en ;
+  rdfs:comment "Constituent step of a path"@en ;
+  rdfs:domain :Path ;
+  rdfs:range :Step ;
+  rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
+
+:order a rdf:Property, owl:FunctionalProperty, owl:DatatypeProperty ;
+  rdfs:label "Order"@en ;
+  rdfs:comment "Order of a step in a path"@en ;
+  rdfs:domain :Step ;
+  rdfs:range xsd:positiveInteger ;
+  rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
 :start a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
   rdfs:label "Start"@en ;
   rdfs:comment "Start of a path"@en ;
-  rdfs:domain :Path ; 
+  rdfs:domain :Step ; 
   rdfs:range rdfs:Class ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
 :edge a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
   rdfs:label "Edge"@en ;
   rdfs:comment "Edge of a path"@en ;
-  rdfs:domain :Path ;
+  rdfs:domain :Step ;
   rdfs:range rdf:Property ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
 :end a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
   rdfs:label "End"@en ;
   rdfs:comment "End of a path"@en ;
-  rdfs:domain :Path ;
+  rdfs:domain :Step ;
   rdfs:range [
     a owl:Class ;
     owl:unionOf (rdfs:Class rdfs:Datatype)
