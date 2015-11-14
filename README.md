@@ -14,11 +14,12 @@ rdf_path_examples.core.generate_examples.generate_examples(config, path, callbac
 var config = {
   "sparql-endpoint": "http://localhost:8890/sparql", // URL of a SPARQL endpoint
   "graph-iri": "http://example.com",                 // IRI of a named graph to query
-  "selection-method": "random"                       // Identifier of the method for selecting examples 
+  "selection-method": "random",                      // Identifier of the method for selecting examples 
+  "limit": 5                                         // Number of examples to retrieve
 };
 ```
 
-`sparql-endpoint` attribute must provide a URL of a SPARQL endpoint allows to retrieve query results serialized in JSON and JSON-LD via JSON-P (e.g., [OpenLink Virtuoso](https://github.com/openlink/virtuoso-opensource)). `graph-iri` is the IRI of the named graph from which instances of the provided RDF path will be retrieved. The only currently supported selection method is `random`, which simply retrieves random examples of the supplied path's instantiations.
+`sparql-endpoint` attribute must provide a URL of a SPARQL endpoint allows to retrieve query results serialized in JSON and JSON-LD via JSON-P (e.g., [OpenLink Virtuoso](https://github.com/openlink/virtuoso-opensource)). `graph-iri` is the IRI of the named graph from which instances of the provided RDF path will be retrieved. The only currently supported selection method is `random`, which simply retrieves random examples of the supplied path's instantiations. The configuration can optionally provide the `limit` attribute that specifies the number of examples to be retrieved. This attribute defaults to 5.
 
 `path` is a JavaScript object representing an RDF path serialized in [JSON-LD](http://json-ld.org/) using the [RDF Path vocabulary](https://github.com/jindrichmynarz/rdf-path-examples/blob/master/resources/rdf_path.ttl). For example, here is a path from `gr:BusinessEntity` to `xsd:string` via `foaf:page`:
 

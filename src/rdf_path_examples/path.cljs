@@ -116,7 +116,7 @@
 
 (defmethod generate-examples "random"
   [{:keys [graph-iri limit sparql-endpoint]
-    :or {limit 100}
+    :or {limit 5}
     :as config}
    path
    callback]

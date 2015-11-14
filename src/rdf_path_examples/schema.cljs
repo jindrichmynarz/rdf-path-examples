@@ -10,8 +10,11 @@
 (def HTTP-IRI
   (s/pred http-iri? 'HTTP-IRI))
 
+(def positive? (s/pred pos? 'pos?))
+
 (def Config
   "Schema for configuration argument"
   {:sparql-endpoint HTTP-IRI
    :graph-iri HTTP-IRI
-   :selection-method (s/enum "random")})
+   :selection-method (s/enum "random")
+   (s/optional-key :limit) (s/both s/Int positive?)})

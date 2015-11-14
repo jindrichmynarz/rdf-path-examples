@@ -11,6 +11,6 @@
   {:pre [(object? config)
          (object? path)
          (fn? callback)]}
-  (rdf-path/generate-examples (js->clj config)
+  (rdf-path/generate-examples (js->clj config :keywordize-keys true)
                               path
                               (comp callback clj->js)))
