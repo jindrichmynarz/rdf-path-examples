@@ -2,28 +2,56 @@
 @prefix ex:   <http://example.com/> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix gr:   <http://purl.org/goodrelations/v1#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 # Path
 
 ex:Path2 a rdfs:Class ;
-  rdfs:subClassOf :Path ;
-  :hasStep ex:Step1, ex:Step2 .
+  rdfs:subClassOf :Path, [
+    a owl:Restriction ;
+    owl:onProperty :hasStep ;
+    owl:allValuesFrom ex:Step1
+  ] .
 
 ex:Step1 a rdfs:Class ;
-  rdfs:subClassOf :Step ;
-  :start ex:BusinessEntity ;
-  :edge foaf:page ;
-  :end ex:Document ;
-  :order 1 .
+  rdfs:subClassOf :Step, [
+    a owl:Restriction ;
+    owl:onProperty :start ;
+    owl:allValuesFrom ex:BusinessEntity
+  ], [
+    a owl:Restriction ;
+    owl:onProperty :edge ;
+    owl:hasValue foaf:page
+  ], [
+    a owl:Restriction ;
+    owl:onProperty :end ;
+    owl:allValuesFrom ex:Document
+  ], [
+    a owl:Restriction ;
+    owl:onProperty :order ;
+    owl:hasValue 1
+  ] .
 
 ex:Step2 a rdfs:Class ;
-  rdfs:subClassOf :Step ;
-  :start ex:BusinessEntity ;
-  :edge rdfs:label ;
-  :end ex:string ;
-  :order 2 .
+  rdfs:subClassOf :Step, [
+    a owl:Restriction ;
+    owl:onProperty :start ;
+    owl:allValuesFrom ex:Document
+  ], [
+    a owl:Restriction ;
+    owl:onProperty :edge ;
+    owl:hasValue rdfs:label
+  ], [
+    a owl:Restriction ;
+    owl:onProperty :end ;
+    owl:allValuesFrom ex:string
+  ], [
+    a owl:Restriction ;
+    owl:onProperty :order ;
+    owl:hasValue 2
+  ] .
 
 ex:BusinessEntity a rdfs:Class ;
   rdfs:subClassOf gr:BusinessEntity .
