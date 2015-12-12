@@ -20,7 +20,7 @@ ex:Step1 a rdfs:Class ;
 
 ex:Step2 a rdfs:Class ;
   rdfs:subClassOf :Step ;
-  :start ex:BusinessEntity ;
+  :start ex:Document ;
   :edge rdfs:label ;
   :end ex:string ;
   :order 2 .
