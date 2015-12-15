@@ -27,47 +27,35 @@
   rdfs:comment "Path in an RDF graph"@en ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
-:Step a rdfs:Class ;
-  rdfs:label "Step"@en ;
-  rdfs:comment "Step in an RDF path"@en ;
+:Edge a rdfs:Class ;
+  rdfs:label "Edge"@en ;
+  rdfs:comment "Edge of an RDF path"@en ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
 # ----- Properties -----
 
-:hasStep a rdf:Property, owl:ObjectProperty ;
-  rdfs:label "Has step"@en ;
-  rdfs:comment "Constituent step of a path"@en ;
+:edges a rdf:Property, owl:ObjectProperty ;
+  rdfs:label "Edges"@en ;
+  rdfs:comment "List of edges constituting a path"@en ;
   rdfs:domain :Path ;
-  rdfs:range :Step ;
-  rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
-
-:order a rdf:Property, owl:FunctionalProperty, owl:DatatypeProperty ;
-  rdfs:label "Order"@en ;
-  rdfs:comment "Order of a step in a path"@en ;
-  rdfs:domain :Step ;
-  rdfs:range xsd:positiveInteger ;
+  rdfs:range rdf:Seq ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
 :start a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
   rdfs:label "Start"@en ;
-  rdfs:comment "Start of a path"@en ;
-  rdfs:domain :Step ; 
-  rdfs:range rdfs:Class ;
+  rdfs:comment "Start of an edge"@en ;
+  rdfs:domain :Edge ; 
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
-:edge a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
-  rdfs:label "Edge"@en ;
-  rdfs:comment "Edge of a path"@en ;
-  rdfs:domain :Step ;
+:edgeProperty a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
+  rdfs:label "Edge property"@en ;
+  rdfs:comment "Property of an edge"@en ;
+  rdfs:domain :Edge ;
   rdfs:range rdf:Property ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
-:end a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
+:end a rdf:Property, owl:FunctionalProperty ;
   rdfs:label "End"@en ;
-  rdfs:comment "End of a path"@en ;
-  rdfs:domain :Step ;
-  rdfs:range [
-    a owl:Class ;
-    owl:unionOf (rdfs:Class rdfs:Datatype)
-  ] ;
+  rdfs:comment "End of an edge"@en ;
+  rdfs:domain :Edge ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
