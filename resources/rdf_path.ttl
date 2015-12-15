@@ -30,6 +30,7 @@
 :Edge a rdfs:Class ;
   rdfs:label "Edge"@en ;
   rdfs:comment "Edge of an RDF path"@en ;
+  rdfs:subClassOf rdf:Statement ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
 # ----- Properties -----
@@ -44,12 +45,14 @@
 :start a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
   rdfs:label "Start"@en ;
   rdfs:comment "Start of an edge"@en ;
+  rdfs:subPropertyOf rdf:subject ;
   rdfs:domain :Edge ; 
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
 
 :edgeProperty a rdf:Property, owl:FunctionalProperty, owl:ObjectProperty ;
   rdfs:label "Edge property"@en ;
   rdfs:comment "Property of an edge"@en ;
+  rdfs:subPropertyOf rdf:predicate ;
   rdfs:domain :Edge ;
   rdfs:range rdf:Property ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
@@ -57,5 +60,6 @@
 :end a rdf:Property, owl:FunctionalProperty ;
   rdfs:label "End"@en ;
   rdfs:comment "End of an edge"@en ;
+  rdfs:subPropertyOf rdf:object ;
   rdfs:domain :Edge ;
   rdfs:isDefinedBy <http://purl.org/lodsight/rdf-path> .
