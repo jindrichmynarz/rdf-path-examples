@@ -6,15 +6,15 @@
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.122"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [org.clojure/core.async "0.2.374"]
                  [cljsjs/mustache "1.1.0-0"]
-                 [prismatic/schema "1.0.3"]
-                 [cljs-http "0.1.37"]
+                 [prismatic/schema "1.0.4"]
+                 [cljs-http "0.1.38"]
                  [clj-fuzzy "0.3.1"]
                  [org.clojure/test.check "0.9.0"]]
 
-  :plugins [[lein-cljsbuild "1.1.0"]
-            [lein-figwheel "0.4.1"]
+  :plugins [[lein-cljsbuild "1.1.1"]
+            [lein-figwheel "0.5.0-2"]
             [lein-doo "0.1.6-SNAPSHOT"]]
 
   :source-paths ["src"]
