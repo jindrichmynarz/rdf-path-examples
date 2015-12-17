@@ -31,26 +31,17 @@ var config = {
     "gr": "http://purl.org/goodrelations/v1#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "rdfs:subClassOf": {"@type": "@id"},
-    "edge": {"@type": "@id"},
-    "end": {"@type": "@id"},
-    "start": {"@type": "@id"}
+    "edgeProperty": {"@type": "@id"},
+    "edges": {"@container": "@list"}
   },
-  "@graph": [
-    {
-      "@id": "#e0",
-      "rdfs:subClassOf": "gr:BusinessEntity"
-    },
-    {
-      "@id": "#e1",
-      "rdfs:subClassOf": "xsd:string"
-    },
-    {
-      "@type": "Path",
-      "start": "#e0",
-      "edge": "foaf:page",
-      "end": "#e1"
-    },
+  "@graph": [{
+    "@type": "Path",
+    "edges": [{
+      "@type": "Edge",
+      "start": {"@type": "gr:BusinessEntity"},
+      "edgeProperty": "foaf:page",
+      "end": {"@type": "xsd:string"}
+    }]},
     {
       "@id": "gr:BusinessEntity",
       "@type": "rdfs:Class"
@@ -63,26 +54,52 @@ var config = {
 }
 ```
 
+The path needs to contain 1 instance of the `:Path` class. The path must have 1 or more values of the `:edges` property wrapped as a list (`rdf:Seq`). The edges constituting a path are instances of the `:Edge` class. Each edge has a `:start` and `:end` nodes and `:edgeProperty` that denotes their relation. Start and end nodes must instantiate either a class or data type. Classes must explicitly instantiate `rdfs:Class`, while data types instantiate `rdfs:Datatype`. 
+
 `callback` is a function that is called with the generated examples as its argument:
 
 ```js
 callback(examples);
 ```
 
-`examples` are formatted as an array of arrays. Each example is represented as an array. The array contains path nodes interleaved with path edges. The order of items in the array represents the order of the path steps. For example, 2 examples for the above-mentioned path may look like the following:
+`examples` are too represented using JSON-LD. For example, 2 examples for the above-mentioned path may look like the following:
 
 ```js
-var examples = [
-  ["http://linked.opendata.cz/resource/business-entity/7d179039-1f42-4559-90ea-8a624606e663",
-   "http://xmlns.com/foaf/0.1/page",
-   "http://www.strabag.cz"],
-  ["http://linked.opendata.cz/resource/business-entity/b1672053-e4d6-40fb-b76b-1393a8e1390f",
-   "http://xmlns.com/foaf/0.1/page",
-   "www.mfcr.cz"]
-];
+{
+  "@context": {
+    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "start": {"@type": "@id"},
+    "edgeProperty": {"@type": "@id"},
+    "edges": {"@container": "@list"}
+  },
+  "@graph": [
+    {
+      "@type": "Path",
+      "edges": [{
+        "@type": "Edge",
+        "start": "http://linked.opendata.cz/resource/business-entity/ce177c67-6be4-4f26-90ea-c267466d0dfd",
+        "edgeProperty": "foaf:page",
+        "end": "http://www.fnkv.cz"
+      }]
+    },
+    {
+      "@type": "Path",
+      "edges": [{
+        "@type": "Edge",
+        "start": "http://linked.opendata.cz/resource/business-entity/81c5edb3-ac84-47c3-9a3c-f3fe5c492cd1",
+        "edgeProperty": "foaf:page",
+        "end": "www.colas.cz"
+      }]
+    }
+  ]
+};
 ```
 
-If we consider the first example, then `http://linked.opendata.cz/resource/business-entity/7d179039-1f42-4559-90ea-8a624606e663` and `http://www.strabag.cz` are the path's nodes, while `http://xmlns.com/foaf/0.1/page` is the path's edge. Edges are always represented as absolute URIs. Nodes can be either absolute URIs or literals, such as numbers.
+## Tests
+
+You can run tests using [lein-doo](https://github.com/bensu/doo), for example by `lein doo phantom test once`.
 
 ## License
 
