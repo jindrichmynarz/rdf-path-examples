@@ -5,11 +5,25 @@
 @param int   limit
 }}
 
+PREFIX :     <http://purl.org/lodsight/rdf-path#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
 CONSTRUCT {
+  [] a :Path ;
+    :edges (
+      {{#path}}
+        [
+          a :Edge ;
+          :start ?{{start.varname}} ;
+          :edgeProperty <{{{edgeProperty}}}> ;
+          :end ?{{end.varname}}
+        ]
+      {{/path}}
+    ) .
   {{#vars}}
-    {{^datatype}}
-    ?{{varname}} ?{{varname}}p ?{{varname}}o .
-    {{/datatype}}
+  {{^datatype}} 
+  ?{{varname}} rdfs:label ?{{varname}}o .
+  {{/datatype}}
   {{/vars}}
 }
 WHERE {
@@ -22,7 +36,7 @@ WHERE {
           ?{{start.varname}} a <{{{start.type}}}> . 
           {{/start.first}}
           
-          ?{{start.varname}} <{{{edge}}}> ?{{end.varname}} .
+          ?{{start.varname}} <{{{edgeProperty}}}> ?{{end.varname}} .
 
           {{#end.datatype}}
           FILTER sameTerm(DATATYPE(?{{end.varname}}), <{{{end.type}}}>)
@@ -41,7 +55,7 @@ WHERE {
   {{^datatype}} {{! No OPTIONAL is needed for datatype vars. }}
   OPTIONAL { 
     GRAPH <{{{graph-iri}}}> {
-      ?{{varname}} ?{{varname}}p ?{{varname}}o .
+      ?{{varname}} rdfs:label ?{{varname}}o .
     }
   }
   {{/datatype}}
