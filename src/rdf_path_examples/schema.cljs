@@ -2,7 +2,7 @@
   (:require [schema.core :as s :include-macros true])
   (:import [goog Uri]))
 
-(defn http-iri?
+(defn- http-iri?
   "Test if `iri` is a HTTP IRI."
   [iri]
   (contains? #{"http" "https"} (.getScheme (Uri. iri))))
@@ -17,4 +17,4 @@
   {:sparql-endpoint HTTP-IRI
    :graph-iri HTTP-IRI
    :selection-method (s/enum "random")
-   (s/optional-key :limit) (s/both s/Int positive?)})
+   (s/optional-key :limit) (s/conditional positive? s/Int)})
