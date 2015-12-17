@@ -1,0 +1,31 @@
+{
+  "@context": {
+    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "org": "http://www.w3.org/ns/org#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schema": "http://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "edgeProperty": {"@type": "@id"},
+    "edges": {"@container": "@list"}
+  },
+  "@graph": [{
+    "@type": "Path",
+    "edges": [{
+       "@type": "Edge",
+       "start": {"@type": "org:Organization"},
+       "edgeProperty": "org:hasSubOrganization",
+       "end": {"@type": "org:Organization"}
+    }, {
+       "@type": "Edge",
+       "start": {"@type": "org:Organization"},
+       "edgeProperty": "schema:legalName",
+       "end": {"@type": "xsd:string"}
+    }]
+  }, {
+    "@id": "org:Organization",
+    "@type": "rdfs:Class"
+  }, {
+    "@id": "xsd:string",
+    "@type": "rdfs:Datatype"
+  }]
+}
