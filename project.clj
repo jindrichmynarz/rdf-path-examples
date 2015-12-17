@@ -9,7 +9,7 @@
                  [org.clojure/core.async "0.2.374"]
                  [cljsjs/mustache "1.1.0-0"]
                  [prismatic/schema "1.0.4"]
-                 [cljs-http "0.1.38"]
+                 [cljs-http "0.1.40-SNAPSHOT"]
                  [clj-fuzzy "0.3.1"]
                  [org.clojure/test.check "0.9.0"]]
 
