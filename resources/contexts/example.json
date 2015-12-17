@@ -1,0 +1,9 @@
+{
+  "@context": {
+    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "edges": {"@container": "@list"},
+    "edgeProperty": {"@type": "@id"},
+    "start": {"@type": "@id"}
+  }
+}
