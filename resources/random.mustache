@@ -5,25 +5,59 @@
 @param int   limit
 }}
 
-SELECT DISTINCT {{#vars}} ?{{.}} {{/vars}}
-WHERE {
-  GRAPH <{{{graph-iri}}}> {
-    {{#path}}
-      {{#start.first}}
-      ?{{start.varname}} a <{{{start.type}}}> . 
-      {{/start.first}}
-      
-      ?{{start.varname}} <{{{edgeProperty}}}> ?{{end.varname}} .
+PREFIX :     <http://purl.org/lodsight/rdf-path#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-      {{#end.datatype}}
-      FILTER sameTerm(DATATYPE(?{{end.varname}}), <{{{end.type}}}>)
-      {{/end.datatype}}
-
-      {{^end.datatype}}
-      ?{{end.varname}} a <{{{end.type}}}> .
-      {{/end.datatype}}
-    {{/path}}
-  }
+CONSTRUCT {
+  [] a :Path ;
+    :edges (
+      {{#path}}
+        [
+          a :Edge ;
+          :start ?{{start.varname}} ;
+          :edgeProperty <{{{edgeProperty}}}> ;
+          :end ?{{end.varname}}
+        ]
+      {{/path}}
+    ) .
+  {{#vars}}
+  {{^datatype}} 
+  ?{{varname}} rdfs:label ?{{varname}}o .
+  {{/datatype}}
+  {{/vars}}
 }
-ORDER BY RAND()
-LIMIT {{limit}}
+WHERE {
+  {
+    SELECT DISTINCT {{#vars}} ?{{varname}} {{/vars}}
+    WHERE {
+      GRAPH <{{{graph-iri}}}> {
+        {{#path}}
+          {{#start.first}}
+          ?{{start.varname}} a <{{{start.type}}}> . 
+          {{/start.first}}
+          
+          ?{{start.varname}} <{{{edgeProperty}}}> ?{{end.varname}} .
+
+          {{#end.datatype}}
+          FILTER sameTerm(DATATYPE(?{{end.varname}}), <{{{end.type}}}>)
+          {{/end.datatype}}
+
+          {{^end.datatype}}
+          ?{{end.varname}} a <{{{end.type}}}> .
+          {{/end.datatype}}
+        {{/path}}
+      }
+    }
+    ORDER BY RAND()
+    LIMIT {{limit}}
+  }
+  {{#vars}}
+  {{^datatype}} {{! No OPTIONAL is needed for datatype vars. }}
+  OPTIONAL { 
+    GRAPH <{{{graph-iri}}}> {
+      ?{{varname}} rdfs:label ?{{varname}}o .
+    }
+  }
+  {{/datatype}}
+  {{/vars}}
+}
