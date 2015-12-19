@@ -13,9 +13,9 @@
                  [clj-fuzzy "0.3.1"]
                  [org.clojure/test.check "0.9.0"]]
 
-  :plugins [[lein-cljsbuild "1.1.1"]
+  :plugins [[lein-cljsbuild "1.1.2"]
             [lein-figwheel "0.5.0-2"]
-            [lein-doo "0.1.6-SNAPSHOT"]]
+            [lein-doo "0.1.6"]]
 
   :source-paths ["src"]
 
@@ -24,33 +24,32 @@
   :cljsbuild {
     :builds [{:id "dev"
               :source-paths ["src"]
-              :figwheel {} ; This is needed for Figwheel to work.
+              :figwheel true ; This is needed for Figwheel to work.
               :compiler {:main rdf-path-examples.core
                          :asset-path "js/compiled/out"
                          :output-to "resources/public/js/compiled/rdf_path_examples.js"
                          :output-dir "resources/public/js/compiled/out"
                          :source-map-timestamp true
-                         :externs ["externs/jsonld.js"]
-                         :foreign-libs [{:file "resources/jsonld.js"
-                                         :provides ["jsonld"]
-                                         ;:module-type :commonjs
-                                         }]
-                         }}
+                         :externs ["jsonld-externs.js"]
+                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"
+                                         :provides ["jsonld"]}]}}
              {:id "min"
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/rdf_path_examples.js"
                          :main rdf-path-examples.core
                          :optimizations :advanced
-                         :externs ["externs/jsonld.js"]
-                         :pretty-print false}}
+                         :pretty-print false
+                         :externs ["jsonld-externs.js"]
+                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"
+                                         :provides ["jsonld"]}]}}
              {:id "test"
               :source-paths ["src" "test"]
               :compiler {:output-to "target/test.js"
                          :main rdf-path-examples.runner
                          :optimizations :whitespace
-                         :externs ["externs/jsonld.js"]
-                         :foreign-libs [{:file "resources/jsonld.js"
-                                         :provides ["jsonld"]}]
-                         :pretty-print true}}]}
+                         :pretty-print true
+                         :externs ["jsonld-externs.js"]
+                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"
+                                         :provides ["jsonld"]}]}}]}
 
   :figwheel {:css-dirs ["resources/public/css"]})
