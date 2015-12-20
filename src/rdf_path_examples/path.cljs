@@ -1,111 +1,78 @@
 (ns ^:figwheel-always rdf-path-examples.path
-  (:require [rdf-path-examples.schema :refer [Config]]
-            [rdf-path-examples.sparql :refer [select-query]]
-            [rdf-path-examples.jsonld :refer [compact-jsonld path-context]]
+  (:require [rdf-path-examples.schema :refer [Config PathGraph]]
+            [rdf-path-examples.sparql :refer [construct-query]]
+            [rdf-path-examples.jsonld :refer [compact-jsonld example-context path-context]]
+            [rdf-path-examples.prefixes :refer [rdfs]]
             [schema.core :as s]
             [clojure.set :refer [union]]
-            [cljs.core.async :refer [<! >! chan put!]]
-            [cljsjs.mustache :as mustache]
-            [goog.crypt :refer [byteArrayToHex]])
+            [cljs.core.async :refer [<!]]
+            [cljsjs.mustache :as mustache])
   (:require-macros [rdf-path-examples.macros :refer [read-file]]
-                   [cljs.core.async.macros :refer [go]])
-  (:import [goog.crypt Md5]))
+                   [cljs.core.async.macros :refer [go]]))
+
+(enable-console-print!)
 
 ; ----- SPARQL query templates -----
 
 (defonce random-query (read-file "random.mustache"))
 
-(defonce random-construct-query (read-file "random_construct.mustache"))
-
-; ----- Namespace prefixes -----
-
-(defn- prefix
-  "Builds a function for compact IRIs in the namespace `iri`."
-  [iri]
-  (partial str iri))
-
-(def ^:private rdfs
-  (prefix "http://www.w3.org/2000/01/rdf-schema#"))
-
-; ----- Private functions -----
-
-(def ^:private find+rest
-  "Find first item satisfying a predicate and return along with the rest of sequence."
-  (juxt (comp first filter) remove))
-
-(defn- update-vals
+(defn update-vals
   "Update values of keys `ks` in map `m` by applying function `f`."
   [m ks f]
-  (reduce #(update-in % [%2] f) m ks))
+  (reduce #(update-in % [%2] (partial f %2)) m ks))
 
-(defn- find-by-id
+(defn find-by-id
   "Helper function to find a resource identified with `id` in `resources`."
   [resources id]
   (first (filter (comp (partial = id) :id) resources)))
 
-(defn- datatype?
+(def datatype?
   "Predicate testing whether resource identified with `id` is a datatype."
-  [resources id]
-  (= (:type (find-by-id resources id)) (rdfs "Datatype")))
+  (comp (partial = (rdfs "Datatype")) :type))
 
-(defn- id->varname
-  "Convert `id` to variable name by hashing it with MD5 and prefixing it with 'e'."
-  [id]
-  (str "e" (byteArrayToHex (.digest (doto (Md5.) (.update id))))))
-
-(defn format-path
-  "Format a path step `path` for templating via Mustache.
-  `resources` is a list of resources comprising the complete path.
+(defn format-edge
+  "Formats a path `edge` for templating via Mustache.
+  `path` is a list of resources comprising the complete path.
   `index` is the index of the path step."
-  [resources index path]
-  (update-vals path
+  [path index edge]
+  (update-vals edge
                [:start :end]
-               (fn [id]
-                 (let [{:keys [subclassof] :as resource} (find-by-id resources id)]
-                   (assoc resource :datatype (datatype? resources subclassof)
-                                   :first (zero? index)
-                                   :varname (id->varname id)
-                                   :type subclassof)))))
+               (fn [property vertex]
+                 (let [vertex-type (find-by-id path (:type vertex))]
+                   (assoc vertex
+                          :datatype (datatype? vertex-type)
+                          :first (zero? index)
+                          :varname (str "e"
+                                        (if (= property :start)
+                                          index
+                                          (inc index)))
+                          :type (:id vertex-type))))))
 
 (defn extract-vars
-  "Extract variable names from `path-steps`."
-  [path-steps]
+  "Extract variable names from `path-edges`."
+  [path-edges]
   (letfn [(varname-datatype [variable] (select-keys variable [:varname :datatype]))]
-    (apply union
-      (map (comp set (juxt (comp varname-datatype :start) (comp varname-datatype :end)))
-           path-steps))))
+    (sort-by :varname (apply union
+                             (map (comp set (juxt (comp varname-datatype :start)
+                                                  (comp varname-datatype :end)))
+                                  path-edges)))))
 
-(defn sort-path
-  "Sort `path` by following :start and :end."
-  ([path]
-   (let [[head tail] (find+rest (comp #(not-any? (comp (partial = %) :end) path) :start) path)]
-     (sort-path tail [head])))
-  ([path sorted-path]
-   (if (seq path)
-     (let [current-end (:end (peek sorted-path))
-           [head tail] (find+rest (comp (partial = current-end) :start) path)]
-       (recur tail (conj sorted-path head)))
-     sorted-path)))
-
-(defn extract-path
-  "Extract RDF path from `path` serialized in JSON-LD for templating it via Mustache."
+(defn format-path
+  "Format RDF path from `path` serialized in JSON-LD for templating it via Mustache."
   [path]
-  (go (let [resources (<! (compact-jsonld path path-context))
-            path-steps (->> resources
-                            (filter (comp (partial = "Path") :type)) 
-                            sort-path
-                            (map-indexed (partial format-path resources)))]
-        {:path path-steps
-         :properties (map :edge path-steps)
-         :vars (extract-vars path-steps)})))
-
-(defn interleave-path-example
-  "Interleave `resources` from path examples with properties.
-  For example, if we have resource [:A, :B, :C] and properties [:p1, :p2],
-  then the output is [:A :p1 :B :p2 :C]."
-  [properties resources]
-  {:pre [(= (count properties) (dec (count resources)))]}
-  (cons (first resources) (interleave properties (rest resources))))
+  (go (let [compact-path (-> path
+                             (compact-jsonld path-context)
+                             <!
+                             (js->clj :keywordize-keys true)
+                             :graph) 
+            _ (s/validate PathGraph compact-path)
+            path-edges (->> compact-path
+                            (filter (comp (partial = "Path") :type))
+                            first
+                            :edges
+                            (map-indexed (partial format-edge compact-path)))]
+        {:path path-edges
+         :vars (extract-vars path-edges)})))
 
 (defn render-template
   "Render Mustache template with data."
@@ -121,13 +88,12 @@
    path
    callback]
   {:pre [(s/validate Config config)]}
-  (go (let [{:keys [properties vars] :as path-data} (<! (extract-path path))
-            selector (apply juxt (map (comp keyword :varname) vars))
-            interleave-fn (comp (partial interleave-path-example properties) selector)
-            query (render-template random-query :data (assoc path-data
+  (go (let [query (render-template random-query :data (assoc (<! (format-path path))
                                                              :graph-iri graph-iri
-                                                             :limit limit))]
-        (callback (map interleave-fn (<! (select-query sparql-endpoint query))))))) 
+                                                             :limit limit))
+            query-results (clj->js (<! (construct-query sparql-endpoint query)))
+            compact-results (<! (compact-jsonld query-results example-context))]
+        (callback compact-results))))
 
 ; ----- Testing -----
 
@@ -135,10 +101,25 @@
 
 (def path-2 (js/JSON.parse (read-file "test/path_2.json")))
 
-#_(go (println (<! (extract-path path-2))))
+(def path-3 (js/JSON.parse (read-file "test/path_3.json")))
+
+(def path-4 (js/JSON.parse (read-file "test/path_4.json")))
+
+#_(go (println (<! (format-path path-4))))
+
+#_(go (let [compact-path (-> path-4
+                           (compact-jsonld path-context)
+                           <!
+                           (js->clj :keywordize-keys true)
+                           :graph)]
+      (println (s/check PathGraph compact-path))))
 
 (def config {:sparql-endpoint "http://lod2-dev.vse.cz:8890/sparql"
              :graph-iri "http://linked.opendata.cz/resource/dataset/vestnikverejnychzakazek.cz"
              :selection-method "random"})
 
-#_(generate-examples config path-1 println)
+#_(def config {:sparql-endpoint "http://xtest.lmcloud.vse.cz/virtuoso-dbquiz/sparql"
+             :graph-iri "http://dbpedia.org/db-quiz"
+             :selection-method "random"})
+
+#_(generate-examples config path-1 (comp println js/JSON.stringify))
