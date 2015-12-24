@@ -28,7 +28,7 @@
 
 (def Edge
   "An edge in RDF path"
-  {(s/optional-key :type) (s/enum "Path")
+  {(s/optional-key :type) (s/enum "Edge")
    :start Node
    :edgeProperty s/Str
    :end Node})
