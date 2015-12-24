@@ -5,7 +5,7 @@ This is a prototype of a Clojurescript library that generates example instantiat
 The library exposes a single function `generate_examples` in the `rdf_path_examples.core` namespace:
 
 ```js
-rdf_path_examples.core.generate_examples.generate_examples(config, path, callback);
+rdf_path_examples.core.generate_examples(config, path, callback);
 ```
 
 `config` is a JavaScript object:
