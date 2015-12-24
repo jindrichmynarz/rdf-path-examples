@@ -28,18 +28,17 @@
 
 (def Edge
   "An edge in RDF path"
-  {(s/optional-key :type) (s/pred (partial = "Edge"))
+  {(s/optional-key :type) (s/enum "Path")
    :start Node
    :edgeProperty s/Str
    :end Node})
 
 (def Path
   "RDF path"
-  {:type (s/pred (partial = "Path")) ; Path must be explicitly typed.
+  {:type (s/enum "Path") ; Path must be explicitly typed.
    :edges [Edge]
    (s/optional-key :id) s/Str})
 
 (def PathGraph
   "Graph of RDF paths"
-  (s/conditional (fn [graph] (some (comp nil? (partial s/check Path)) graph))
-                 [{s/Keyword s/Any}]))
+  [(s/one Path "path") {s/Keyword s/Any}])
