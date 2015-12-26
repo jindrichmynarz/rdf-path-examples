@@ -1,0 +1,62 @@
+{{!
+@param IRI   graph-iri
+@param Array path
+@param Array vars
+@param int   limit
+}}
+
+PREFIX :     <http://purl.org/lodsight/rdf-path#>
+
+CONSTRUCT {
+  [] a :Path ;
+    :edges (
+      {{#path}}
+        [
+          a :Edge ;
+          :start ?{{start.varname}} ;
+          :edgeProperty <{{{edgeProperty}}}> ;
+          :end ?{{end.varname}}
+        ]
+      {{/path}}
+    ) .
+  {{#vars}}
+  {{^datatype}} 
+  ?{{varname}} ?{{varname}}p ?{{varname}}o .
+  {{/datatype}}
+  {{/vars}}
+}
+WHERE {
+  {
+    SELECT DISTINCT {{#vars}} ?{{varname}} {{/vars}}
+    WHERE {
+      GRAPH <{{{graph-iri}}}> {
+        {{#path}}
+          {{#start.first}}
+          ?{{start.varname}} a <{{{start.type}}}> . 
+          {{/start.first}}
+          
+          ?{{start.varname}} <{{{edgeProperty}}}> ?{{end.varname}} .
+
+          {{#end.datatype}}
+          FILTER sameTerm(DATATYPE(?{{end.varname}}), <{{{end.type}}}>)
+          {{/end.datatype}}
+
+          {{^end.datatype}}
+          ?{{end.varname}} a <{{{end.type}}}> .
+          {{/end.datatype}}
+        {{/path}}
+      }
+    }
+    ORDER BY RAND()
+    LIMIT {{limit}}
+  }
+  {{#vars}}
+  {{^datatype}} {{! No OPTIONAL is needed for datatype vars. }}
+  OPTIONAL { 
+    GRAPH <{{{graph-iri}}}> {
+      ?{{varname}} ?{{varname}}p ?{{varname}}o .
+    }
+  }
+  {{/datatype}}
+  {{/vars}}
+}
