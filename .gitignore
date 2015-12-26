@@ -96,4 +96,4 @@ build/Release
 node_modules
 
 # Scratchpad file
-src/rdf-path-examples/scratchpad.cljs
+src/rdf_path_examples/scratchpad.cljs
