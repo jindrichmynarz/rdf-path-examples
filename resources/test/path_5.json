@@ -1,0 +1,35 @@
+{
+  "@context": {
+    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "gr": "http://purl.org/goodrelations/v1#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schema": "http://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "edgeProperty": {"@type": "@id"},
+    "edges": {"@container": "@list"}
+  },
+  "@graph": [{
+    "@type": "Path",
+    "edges": [{
+      "start": {"@type": "gr:BusinessEntity"},
+      "edgeProperty": "schema:address",
+      "end": {"@type": "schema:PostalAddress"}
+    }, {
+      "start": {"@type": "schema:PostalAddress"},
+      "edgeProperty": "schema:streetAddress",
+      "end": {"@type": "xsd:string"}
+    }]},
+    {
+      "@id": "gr:BusinessEntity",
+      "@type": "rdfs:Class"
+    },
+    {
+      "@id": "schema:PostalAddress",
+      "@type": "rdfs:Class"
+    },
+    {
+      "@id": "xsd:string",
+      "@type": "rdfs:Datatype"
+    }
+  ]
+}
