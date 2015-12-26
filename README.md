@@ -19,7 +19,7 @@ var config = {
 };
 ```
 
-`sparql-endpoint` attribute must provide a URL of a SPARQL endpoint allows to retrieve query results serialized in JSON and JSON-LD via JSON-P (e.g., [OpenLink Virtuoso](https://github.com/openlink/virtuoso-opensource)). `graph-iri` is the IRI of the named graph from which instances of the provided RDF path will be retrieved. The only currently supported selection method is `random`, which simply retrieves random examples of the supplied path's instantiations. The configuration can optionally provide the `limit` attribute that specifies the number of examples to be retrieved. This attribute defaults to 5.
+`sparql-endpoint` attribute must provide a URL of a SPARQL endpoint allows to retrieve query results serialized in NTriples (currently only [OpenLink Virtuoso](https://github.com/openlink/virtuoso-opensource) is supported). Note that querying the endpoint's URL must be allowed by the [same-origin policy](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy) or [cross-origin access](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) must be enabled. `graph-iri` is the IRI of the named graph from which instances of the provided RDF path will be retrieved. The only currently supported selection method is `random`, which simply retrieves random examples of the supplied path's instantiations. The configuration can optionally provide the `limit` attribute that specifies the number of examples to be retrieved. This attribute defaults to 5.
 
 `path` is a JavaScript object representing an RDF path serialized in [JSON-LD](http://json-ld.org/) using the [RDF Path vocabulary](https://github.com/jindrichmynarz/rdf-path-examples/blob/master/resources/rdf_path.ttl). For example, here is a path from `gr:BusinessEntity` to `xsd:string` via `foaf:page`:
 
@@ -54,7 +54,7 @@ var config = {
 }
 ```
 
-The path needs to contain 1 instance of the `:Path` class. The path must have 1 or more values of the `:edges` property wrapped as a list (`rdf:Seq`). The edges constituting a path are instances of the `:Edge` class. Each edge has a `:start` and `:end` nodes and `:edgeProperty` that denotes their relation. Start and end nodes must instantiate either a class or data type. Classes must explicitly instantiate `rdfs:Class`, while data types instantiate `rdfs:Datatype`. 
+The path needs to contain 1 instance of the `:Path` class. The path must have 1 or more values of the `:edges` property wrapped as a list (i.e. instance of `rdf:Seq`). The edges constituting a path are instances of the `:Edge` class. Each edge has a `:start` and `:end` nodes and `:edgeProperty` that denotes their relation. Start and end nodes must instantiate either a class or data type. Classes must explicitly instantiate `rdfs:Class`, while data types must instantiate `rdfs:Datatype`. 
 
 `callback` is a function that is called with the generated examples as its argument:
 
