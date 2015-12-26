@@ -1,27 +1,26 @@
 (ns rdf-path-examples.sparql
   (:require [cljs-http.client :as http]
-            [cljs.core.async :refer [<! >! chan]])
-  (:require-macros [rdf-path-examples.macros :refer [read-file]]
-                   [cljs.core.async.macros :refer [go]]))
+            [cljs.core.async :refer [chan pipe]]))
 
-(defn sparql-query-channel
-  "Virtuoso-specific JSON-P request"
-  [endpoint query results-format]
-  (http/jsonp endpoint
-              {:keywordize-keys? false
-               :query-params {; Since JSON-P does not allow setting Accept header,
-                              ; we need to use Virtuoso-specific query parameter `format`.
-                              :format results-format
-                              :query query
-                              :timeout 100000}}))
+; ----- Private functions -----
 
-(defn sparql-query
-  "Send a SPARQL `query` to `sparql-endpoint`."
+(defn- sparql-query
+  "Execute a SPARQL `query` on `sparql-endpoint` requesting for results in `results-format`
+  that will be put on the `results-channel`.
+  Request needs to ensure same origin policy or the `endpoint` must enable CORS." 
   [sparql-endpoint query results-format results-channel]
-  (go (>! results-channel (<! (sparql-query-channel sparql-endpoint query results-format))))
-  results-channel)
+  (pipe (http/get sparql-endpoint
+                  {:with-credentials? false ; Necessary for CORS
+                   :headers {"accept" results-format}
+                   :query-params {:query query
+                                  :timeout 100000}})
+        results-channel))
+
+; ----- Public functions -----
 
 (defn construct-query
-  "Send a SPARQL CONSTRUCT `query` to `sparql-endpoint` requesting JSON-LD response."
+  "Execute a SPARQL CONSTRUCT `query` on `sparql-endpoint`.
+  Returns a channel with query results serialized in NTriples."
+  ; `text/plain` is Virtuoso-specific. Virtuoso uses it as MIME type for NTriples.
   [sparql-endpoint query]
-  (sparql-query sparql-endpoint query "application/x-json+ld" (chan 1 (map :body))))
+  (sparql-query sparql-endpoint query "text/plain" (chan 1 (map :body))))
