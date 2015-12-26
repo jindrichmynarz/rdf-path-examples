@@ -1,20 +1,25 @@
-(ns ^:figwheel-always rdf-path-examples.path
+(ns rdf-path-examples.path
   (:require [rdf-path-examples.schema :refer [Config PathGraph]]
             [rdf-path-examples.sparql :refer [construct-query]]
-            [rdf-path-examples.jsonld :refer [compact-jsonld example-context path-context]]
+            [rdf-path-examples.jsonld :as jsonld]
             [rdf-path-examples.prefixes :refer [rdfs]]
+            [rdf-path-examples.combinations :refer [combinations]]
+            [rdf-path-examples.util :refer [render-template]]
             [schema.core :as s]
             [clojure.set :refer [union]]
-            [cljs.core.async :refer [<!]]
-            [cljsjs.mustache :as mustache])
+            [cljs.core.async :refer [<!]])
   (:require-macros [rdf-path-examples.macros :refer [read-file]]
                    [cljs.core.async.macros :refer [go]]))
 
-(enable-console-print!)
+(def sampling-factor
+  "How many times more examples to retrieve for non-random selection methods."
+  2) ; FIXME: Increase after testing.
 
 ; ----- SPARQL query templates -----
 
 (defonce random-query (read-file "random.mustache"))
+
+(defonce distinct-query (read-file "distinct.mustache"))
 
 (defn update-vals
   "Update values of keys `ks` in map `m` by applying function `f`."
@@ -22,9 +27,14 @@
   (reduce #(update-in % [%2] (partial f %2)) m ks))
 
 (defn find-by-id
-  "Helper function to find a resource identified with `id` in `resources`."
-  [resources id]
-  (first (filter (comp (partial = id) :id) resources)))
+  "Helper function to find a resource identified with `id` in `resources`.
+  Returns `id` when resource is not found."
+  [resources id & {:keys [keywordized?]
+                   :or {keywordized? true}}]
+  (let [matches (filter (comp (partial = id) (if keywordized? :id #(get % "@id"))) resources)]
+    (if (seq matches)
+      (first matches)
+      id)))
 
 (def datatype?
   "Predicate testing whether resource identified with `id` is a datatype."
@@ -57,27 +67,52 @@
                                                   (comp varname-datatype :end)))
                                   path-edges)))))
 
-(defn format-path
-  "Format RDF path from `path` serialized in JSON-LD for templating it via Mustache."
-  [path]
-  (go (let [compact-path (-> path
-                             (compact-jsonld path-context)
-                             <!
-                             (js->clj :keywordize-keys true)
-                             :graph) 
-            _ (s/validate PathGraph compact-path)
-            path-edges (->> compact-path
-                            (filter (comp (partial = "Path") :type))
-                            first
-                            :edges
-                            (map-indexed (partial format-edge compact-path)))]
-        {:path path-edges
-         :vars (extract-vars path-edges)})))
+(defn put-path-first
+  "Put instance of Path first in the `path-graph`."
+  [path-graph]
+  (sort-by :type (fn [resource-type] (if (= resource-type "Path") -1 1)) path-graph))
 
-(defn render-template
-  "Render Mustache template with data."
-  [template & {:keys [data]}]
-  (.render js/Mustache template (clj->js data)))
+(defn compact-path
+  "Apply JSON-LD compaction to make `path` structure regular."
+  [path]
+  (go (-> path
+          (jsonld/compact-jsonld jsonld/path-context)
+          <!
+          (js->clj :keywordize-keys true)
+          :graph
+          put-path-first)))
+
+(defn format-path
+  "Format RDF path from `compacted-path` serialized in JSON-LD for templating it via Mustache."
+  [compacted-path]
+  (let [path-edges (->> compacted-path
+                        (filter (comp (partial = "Path") :type))
+                        first
+                        :edges
+                        (map-indexed (partial format-edge compacted-path)))]
+    {:path path-edges
+     :vars (extract-vars path-edges)}))
+
+(defn preprocess-path
+  "Preprocess `path` for SPARQL query"
+  [path]
+  (go (let [compacted-path (<! (compact-path path))]
+        (s/validate PathGraph compacted-path)
+        (format-path compacted-path))))
+
+(def filter-paths
+  "Transducer filtering resources that instantiate Path."
+  (filter (comp (partial = "Path") #(get % "@type"))))
+
+(defn extract-edges
+  "Transducer that extracts edges of a path, provided the function `find-resource`
+  that retrieves resource description via its @id."
+  [find-resource]
+  (map (juxt #(get % "@id")
+             (comp dedupe
+                   (partial mapcat (comp (juxt #(get % "start") #(get % "end"))
+                                         find-resource))
+                   #(get % "edges")))))
 
 (defmulti generate-examples (fn [config path callback] (:selection-method config)))
 
@@ -88,38 +123,44 @@
    path
    callback]
   {:pre [(s/validate Config config)]}
-  (go (let [query (render-template random-query :data (assoc (<! (format-path path))
+  (go (let [formatted-path (<! (preprocess-path path))
+            query (render-template random-query :data (assoc formatted-path
                                                              :graph-iri graph-iri
                                                              :limit limit))
-            query-results (clj->js (<! (construct-query sparql-endpoint query)))
-            compact-results (<! (compact-jsonld query-results example-context))]
-        (callback compact-results))))
+            query-results (<! (construct-query sparql-endpoint query))
+            compacted-results (-> query-results
+                                  jsonld/rdf->jsonld
+                                  <!
+                                  (jsonld/compact-jsonld jsonld/example-context)
+                                  <!)]
+        (callback compacted-results))))
 
-; ----- Testing -----
-
-(def path-1 (js/JSON.parse (read-file "test/path_1.json")))
-
-(def path-2 (js/JSON.parse (read-file "test/path_2.json")))
-
-(def path-3 (js/JSON.parse (read-file "test/path_3.json")))
-
-(def path-4 (js/JSON.parse (read-file "test/path_4.json")))
-
-#_(go (println (<! (format-path path-4))))
-
-#_(go (let [compact-path (-> path-4
-                           (compact-jsonld path-context)
-                           <!
-                           (js->clj :keywordize-keys true)
-                           :graph)]
-      (println (s/check PathGraph compact-path))))
-
-(def config {:sparql-endpoint "http://lod2-dev.vse.cz:8890/sparql"
-             :graph-iri "http://linked.opendata.cz/resource/dataset/vestnikverejnychzakazek.cz"
-             :selection-method "random"})
-
-#_(def config {:sparql-endpoint "http://xtest.lmcloud.vse.cz/virtuoso-dbquiz/sparql"
-             :graph-iri "http://dbpedia.org/db-quiz"
-             :selection-method "random"})
-
-#_(generate-examples config path-1 (comp println js/JSON.stringify))
+(defmethod generate-examples "distinct"
+  [{:keys [graph-iri limit sparql-endpoint]
+    :or {limit 5}
+    :as config}
+   path
+   callback]
+  (go (let [formatted-path (<! (preprocess-path path))
+            query (render-template distinct-query :data (assoc formatted-path
+                                                               :graph-iri graph-iri
+                                                               :limit (* limit sampling-factor)))
+            query-results (<! (construct-query sparql-endpoint query))
+            graph (-> query-results
+                      jsonld/rdf->jsonld
+                      <!
+                      (jsonld/compact-jsonld jsonld/example-context)
+                      <!
+                      js->clj
+                      (get "@graph"))
+            find-resource (fn [resource] (if (map? resource)
+                                           (find-by-id graph (get resource "@id") :keywordized? false)
+                                           {"@value" resource}))
+            extract-fn (comp filter-paths
+                             (extract-edges find-resource))
+            path-map (into {} extract-fn graph)
+            data (map (partial map find-resource)
+                      (apply map
+                             (comp set vector)
+                             (vals path-map)))]
+        (callback data))))
