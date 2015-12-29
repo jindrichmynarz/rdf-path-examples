@@ -9,9 +9,10 @@
                  [org.clojure/core.async "0.2.374"]
                  [cljsjs/mustache "1.1.0-0"]
                  [prismatic/schema "1.0.4"]
-                 [cljs-http "0.1.40-SNAPSHOT"]
+                 [cljs-http "0.1.39"]
                  [clj-fuzzy "0.3.1"]
-                 [org.clojure/test.check "0.9.0"]]
+                 [org.clojure/test.check "0.9.0"]
+                 [com.andrewmcveigh/cljs-time "0.3.14"]]
 
   :plugins [[lein-cljsbuild "1.1.2"]
             [lein-figwheel "0.5.0-2"]
