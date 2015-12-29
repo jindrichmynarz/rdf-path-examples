@@ -12,3 +12,8 @@
   "Render Mustache template with data."
   [template & {:keys [data]}]
   (.render js/Mustache template (clj->js data)))
+
+(defn wrap-literal
+  "Wraps a JSON-LD literal in a map."
+  [resource]
+  (if (map? resource) resource {"@value" resource}))
