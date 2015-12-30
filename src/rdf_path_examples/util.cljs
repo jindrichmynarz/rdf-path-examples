@@ -3,6 +3,10 @@
 
 (enable-console-print!)
 
+(def duration-regex
+  "Regular expression matching xsd:duration."
+  #"^-?P(\d+Y)?(\d+M)?(\d+D)?T?(\d+H)?(\d+M)?(\d+(\.\d+)?S)?$")
+
 (defn log
   "Log Clojure `data` as a stringified and pretty-printed JSON."
   [data]
