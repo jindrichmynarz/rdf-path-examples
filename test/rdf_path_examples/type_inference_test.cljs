@@ -17,7 +17,7 @@
     (are [literal literal-type] (= (infer-datatype literal) literal-type)
          "2000-01-01" (xsd "date")
          "2015-12-28T12:03:00+01:00" (xsd "dateTime")
-         "P7Y7D" (xsd "duration")
+         "P7Y7D12.34S" (xsd "duration")
          "http://example.com:8080/path/to/page" (xsd "anyURI")
          "example.com" :literal))
   (testing "Non-matching literals"
