@@ -4,7 +4,9 @@
             [rdf-path-examples.jsonld :as jsonld]
             [rdf-path-examples.prefixes :refer [rdfs]]
             [rdf-path-examples.combinations :refer [combinations]]
-            [rdf-path-examples.util :refer [render-template]]
+            [rdf-path-examples.util :refer [log render-template wrap-literal]]
+            [rdf-path-examples.similarity :refer [get-path-similarity]]
+            [rdf-path-examples.diversity :refer [greedy-construction]]
             [schema.core :as s]
             [clojure.set :refer [union]]
             [cljs.core.async :refer [<!]])
@@ -20,6 +22,8 @@
 (defonce random-query (read-file "random.mustache"))
 
 (defonce distinct-query (read-file "distinct.mustache"))
+
+(defonce node-data-query (read-file "node_data.mustache"))
 
 (defn update-vals
   "Update values of keys `ks` in map `m` by applying function `f`."
@@ -105,14 +109,54 @@
   (filter (comp (partial = "Path") #(get % "@type"))))
 
 (defn extract-edges
-  "Transducer that extracts edges of a path, provided the function `find-resource`
+  "Transducer that extracts edges of a path, provided the `find-resource` function 
   that retrieves resource description via its @id."
   [find-resource]
   (map (juxt #(get % "@id")
              (comp dedupe
-                   (partial mapcat (comp (juxt #(get % "start") #(get % "end"))
-                                         find-resource))
+                   (partial mapcat
+                            (comp (juxt #(get % "start") (comp wrap-literal #(get % "end"))) find-resource))
                    #(get % "edges")))))
+
+(defn get-path-data
+  "Get path data in JSON-LD formatted as a Clojure data structure."
+  [{:keys [graph-iri limit sparql-endpoint]}
+   path]
+  (go (let [formatted-path (<! (preprocess-path path))
+            query (render-template distinct-query :data (assoc formatted-path
+                                                               :graph-iri graph-iri
+                                                               :limit (* limit sampling-factor)))]
+        (-> (construct-query sparql-endpoint query)
+            <!
+            jsonld/rdf->jsonld
+            <!
+            (jsonld/compact-jsonld jsonld/example-context)
+            <!
+            js->clj
+            (get "@graph")))))
+
+(defn get-source-data
+  "Get source data describing `path-nodes`."
+  [{:keys [graph-iri sparql-endpoint]}
+   path-nodes]
+  (go (let [query (render-template node-data-query :data {:nodes path-nodes 
+                                                          :graph-iri graph-iri})]
+        (-> (construct-query sparql-endpoint query)
+            <!
+            jsonld/rdf->jsonld
+            <!
+            (jsonld/compact-jsonld (js-obj)) ; Compact with empty context to coerce compact representation.
+            <!
+            js->clj
+            (get "@graph")))))
+
+(defn find-resource
+  "Find `resource` in `data`."
+  [data
+   {id "@id" :as resource}]
+  (if (map? resource)
+    (find-by-id data id :keywordized? false)
+    {"@value" resource}))
 
 (defmulti generate-examples (fn [config path callback] (:selection-method config)))
 
@@ -136,31 +180,28 @@
         (callback compacted-results))))
 
 (defmethod generate-examples "distinct"
-  [{:keys [graph-iri limit sparql-endpoint]
+  [{:keys [limit]
     :or {limit 5}
     :as config}
    path
    callback]
-  (go (let [formatted-path (<! (preprocess-path path))
-            query (render-template distinct-query :data (assoc formatted-path
-                                                               :graph-iri graph-iri
-                                                               :limit (* limit sampling-factor)))
-            query-results (<! (construct-query sparql-endpoint query))
-            graph (-> query-results
-                      jsonld/rdf->jsonld
-                      <!
-                      (jsonld/compact-jsonld jsonld/example-context)
-                      <!
-                      js->clj
-                      (get "@graph"))
-            find-resource (fn [resource] (if (map? resource)
-                                           (find-by-id graph (get resource "@id") :keywordized? false)
-                                           {"@value" resource}))
-            extract-fn (comp filter-paths
-                             (extract-edges find-resource))
-            path-map (into {} extract-fn graph)
-            data (map (partial map find-resource)
-                      (apply map
-                             (comp set vector)
-                             (vals path-map)))]
-        (callback data))))
+  {:pre [(s/validate Config config)]}
+  (go (let [path-data (<! (get-path-data (assoc config :limit limit) path))
+            find-path-data (partial find-resource path-data)
+            path-map (into {} (comp filter-paths (extract-edges find-path-data)) path-data)
+            paths (set (keys path-map))
+            path-nodes (remove nil? (map #(get % "@id") (apply concat (vals path-map))))
+            source-data (<! (get-source-data config path-nodes))
+            path-similarities (into {} (map (juxt (comp set keys)
+                                                  (comp (partial get-path-similarity
+                                                                 (partial find-resource source-data)) vals))
+                                            (combinations path-map 2)))
+            path-example-ids (greedy-construction paths path-similarities limit)
+            ; Reconstruct a JSON-LD serialization of path examples
+            path-examples (map (comp find-path-data (fn [id] {"@id" id})) path-example-ids)
+            path-example-edges (map find-path-data (mapcat #(get % "edges") path-examples))
+            path-example-nodes (map (partial find-resource source-data)
+                                    (remove nil? (mapcat (comp #(get % "@id") path-map) path-example-ids)))
+            results (doto (clj->js {"@graph" (concat path-examples path-example-edges path-example-nodes)})
+                      (aset "@context" jsonld/example-context))]
+        (callback results))))
