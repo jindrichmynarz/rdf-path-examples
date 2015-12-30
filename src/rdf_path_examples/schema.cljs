@@ -17,7 +17,7 @@
   "Schema for configuration argument"
   {:sparql-endpoint HTTP-IRI
    :graph-iri HTTP-IRI
-   :selection-method (s/enum "random")
+   :selection-method (s/enum "random" "distinct")
    (s/optional-key :limit) (s/conditional positive? s/Int)})
 
 (def Node
