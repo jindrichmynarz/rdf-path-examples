@@ -1,5 +1,6 @@
 (ns rdf-path-examples.type-inference
-  (:require [rdf-path-examples.prefixes :refer [xsd]]))
+  (:require [rdf-path-examples.prefixes :refer [xsd]]
+            [rdf-path-examples.util :refer [duration-regex]]))
 
 ; TODO: Implement type inference only for specific types supported by similarity module.
 
@@ -13,11 +14,11 @@
 
 (defn infer-datatype
   "Infers data type of `literal` based on matching to regular expressions."
-  [literal]
+  [^String literal]
   (condp re-matches literal
     #"^\d{4}-\d{2}-\d{2}$" (xsd "date")
     #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+\-]\d{2}:\d{2}|Z)?$" (xsd "dateTime")
-    #"^-?P(\d+Y)?(\d+M)?(\d+D)?T?(\d+H)?(\d+M)?(\d+S)?$" (xsd "duration")
+    duration-regex (xsd "duration")
     iri-regex (xsd "anyURI")
     :literal))
 
