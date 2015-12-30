@@ -1,40 +1,50 @@
 (ns rdf-path-examples.similarity
   (:require [rdf-path-examples.type-inference :refer [infer-type]] 
-            [rdf-path-examples.util :refer [log wrap-literal]]
+            [rdf-path-examples.util :refer [duration-regex log wrap-literal]]
             [rdf-path-examples.prefixes :refer [xsd]]
             [clj-fuzzy.stemmers :refer [porter]]
             [clj-fuzzy.metrics :refer [jaro-winkler]]
+            [cljs-time.core :refer [date-time]]
             [cljs-time.format :refer [formatters parse]])
   (:import [goog Uri]))
 
 (defn average
   "Compute average of numbers in collection `coll`."
-  [coll]
+  [^ISeq coll]
   (if (seq coll)
     (/ (apply + coll)
        (count coll))
     0))
 
-(defn probabilistic-sum
-  "Compute probabilistic sum of `scores`."
-  [scores]
-  (reduce (fn [a b] (- (+ a b) (* a b))) scores))
+(defn duration->date-time
+  "Cast xsd:duration `duration` as date time."
+  [^String duration]
+  ; TODO: Promote overflows by subtracting and modding: [js/Infinity 12 31? 24 60]
+  (when-let [match (re-matches duration-regex duration)]
+    (apply date-time (map js/parseFloat match))))
 
 (defn merge-matching
   "Merge values of matching keys in maps `a` and `b` into a sequence of vectors."
-  [a b]
+  [^IMap a
+   ^IMap b]
   (for [[k v] a
         :let [e (find b k)]
         :when e]
     [v (val e)]))
 
+(defn probabilistic-sum
+  "Compute probabilistic sum of `scores`."
+  [^ISeq scores]
+  (reduce (fn [a b] (- (+ a b) (* a b))) scores))
+
 (defmulti compute-similarity
   "Compute similarity of resources `a` and `b`. Dispatches on the inferred type of the resources.
   Inferred type of `a` and `b` must match, otherwise 0 similarity is returned."
-  (fn [_ a b] (let [a-type (infer-type a)
-                    b-type (infer-type b)]
-                (when (= a-type b-type)
-                  a-type))))
+  (fn [_ ^IMap a ^IMap b]
+    (let [a-type (infer-type a)
+          b-type (infer-type b)]
+      (when (= a-type b-type)
+        a-type))))
 
 (defmethod compute-similarity :referent
   [find-resource-fn
@@ -50,7 +60,7 @@
   [_
    {a "@value"}
    {b "@value"}]
-  0)
+  0) ; TODO
 
 (defmethod compute-similarity (xsd "boolean")
   [_
@@ -66,23 +76,23 @@
         a-date (parse-fn a)
         b-date (parse-fn b)
         difference (js/Math.abs (- a-date b-date))]
-    0))
+    0)) ; TODO
 
 (defmethod compute-similarity (xsd "dateTime")
   [_
    {a "@value"}
    {b "@value"}]
-  (let [parse-fn (partial parse (:date-time))
+  (let [parse-fn (partial parse (:date-time formatters))
         a-date-time (parse-fn a)
         b-date-time (parse-fn b)
-        difference (js/Math.abs (- a-date b-date))])
-  0)
+        difference (js/Math.abs (- a-date-time b-date-time))])
+  0) ; TODO
 
 (defmethod compute-similarity (xsd "duration")
   [_
    {a "@value"}
    {b "@value"}]
-  0)
+  0) ; TODO
 
 (defmethod compute-similarity (xsd "anyURI")
   [_
@@ -90,7 +100,7 @@
    {b "@value"}]
   (let [a-iri (Uri.parse a)
         b-iri (Uri.parse b)]
-    0))
+    0)) ; TODO
 ; .getDomain
 ; .getPort
 ; .getFragment
@@ -120,5 +130,5 @@
 (defn get-path-similarity
   "Get similarity of paths `a` and `b` given the `find-resource-fn` that
   finds resource description."
-  [find-resource-fn [a b]]
+  [^IFn find-resource-fn [a b]]
   (average (map (partial compute-similarity' find-resource-fn) a b)))
