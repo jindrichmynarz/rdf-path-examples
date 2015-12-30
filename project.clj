@@ -25,7 +25,7 @@
   :cljsbuild {
     :builds {:dev {
               :source-paths ["src"]
-              :figwheel true ; This is needed for Figwheel to work.
+              :figwheel {:css-dirs ["resources/public/css"]}
               :compiler {:main rdf-path-examples.core
                          :asset-path "js/compiled/out"
                          :output-to "resources/public/js/compiled/rdf_path_examples.js"
@@ -46,11 +46,10 @@
              :test {
               :source-paths ["src" "test"]
               :compiler {:output-to "target/test.js"
+                         :output-dir "resources/public/js/compiled/test/out"
                          :main rdf-path-examples.runner
                          :optimizations :whitespace
                          :pretty-print true
                          :externs ["jsonld-externs.js"]
                          :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"
-                                         :provides ["jsonld"]}]}}}}
-
-  :figwheel {:css-dirs ["resources/public/css"]})
+                                         :provides ["jsonld"]}]}}}})
