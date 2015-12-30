@@ -1,0 +1,22 @@
+{{!
+@param IRI   graph-iri
+@param Array nodes
+}}
+
+PREFIX :     <http://purl.org/lodsight/rdf-path#>
+
+CONSTRUCT {
+  ?node ?p ?o .
+}
+WHERE {
+  GRAPH <{{{graph-iri}}}> {
+    VALUES ?node {
+      {{#nodes}}
+      <{{{.}}}>
+      {{/nodes}}
+    }
+    OPTIONAL {
+      ?node ?p ?o .
+    }
+  }
+}
