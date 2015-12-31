@@ -7,8 +7,11 @@
   (testing "Matching resources"
     (are [resource resource-type] (= (infer-type resource) resource-type)
          {"@id" "_:b1234"} :referent
+         {"@value" "https://example.com:3030/path/to/resource"} (xsd "anyURI")
          {"@value" "2000-01-01"
           "@datatype" (xsd "date")} (xsd "date")
+         {"@value" "2015-12-30"} (xsd "date")
+         {"@value" 1} (xsd "decimal")
          {"@value" 1.2} (xsd "decimal")
          {"@value" false} (xsd "boolean"))))
 
