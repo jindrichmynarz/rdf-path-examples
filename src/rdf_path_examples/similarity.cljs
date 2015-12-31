@@ -8,6 +8,15 @@
             [cljs-time.format :refer [formatters parse]])
   (:import [goog Uri]))
 
+(def iri-part-weights
+  "Pairs of function and weight to compute similarity of IRIs."
+  [[#(.getDomain %) 0.68]
+   [(comp str #(.getPort %)) 0.01]
+   [#(.getFragment %) 0.01]
+   [#(.getPath %) 0.15]
+   [#(.getQuery %) 0.02]
+   [#(.getScheme %) 0.13]])
+
 (defn average
   "Compute average of numbers in collection `coll`."
   [^ISeq coll]
@@ -60,7 +69,7 @@
   [_
    {a "@value"}
    {b "@value"}]
-  0) ; TODO
+  (if (= a b) 1 0)) ; TODO
 
 (defmethod compute-similarity (xsd "boolean")
   [_
@@ -76,7 +85,7 @@
         a-date (parse-fn a)
         b-date (parse-fn b)
         difference (js/Math.abs (- a-date b-date))]
-    0)) ; TODO
+    (if (= a b) 1 0))) ; TODO
 
 (defmethod compute-similarity (xsd "dateTime")
   [_
@@ -92,7 +101,7 @@
   [_
    {a "@value"}
    {b "@value"}]
-  0) ; TODO
+  (if (= a b) 1 0)) ; TODO
 
 (defmethod compute-similarity (xsd "anyURI")
   [_
@@ -100,14 +109,14 @@
    {b "@value"}]
   (let [a-iri (Uri.parse a)
         b-iri (Uri.parse b)]
-    0)) ; TODO
-; .getDomain
-; .getPort
-; .getFragment
-; .getPath
-; .getQuery
-; .getScheme
-; .getUserInfo
+    (apply + (map (fn [[f weight]]
+                    (let [a-part (f a-iri)
+                          b-part (f b-iri)]
+                      (* weight
+                         (if (not-any? empty? [a-part a-part])
+                           (jaro-winkler a-part b-part)
+                           1))))
+                  iri-part-weights))))
 
 (defmethod compute-similarity :literal
   [_
