@@ -17,6 +17,12 @@
                                  :timeout 100000}})
         results-channel))
 
+(def select-results-channel
+  "Channel that extracts values from application/sparql-results+json format."
+  (letfn [(extract-values [result] (into {} (map (fn [[k v]] [k (:value v)]) result)))]
+    (fn []
+      (chan 1 (map (comp (partial map extract-values) :bindings :results :body))))))
+
 ; ----- Public functions -----
 
 (defn construct-query
@@ -26,3 +32,8 @@
   ; Fuseki uses the standard MIME type "application/n-triples".
   [sparql-endpoint query]
   (sparql-query sparql-endpoint query "text/plain" (chan 1 (map :body))))
+
+(defn select-query
+  "Execute a SPARQL SELECT `query` on `sparql-endpoint`."
+  [sparql-endpoint query]
+  (sparql-query sparql-endpoint query "application/sparql-results+json" (select-results-channel)))
