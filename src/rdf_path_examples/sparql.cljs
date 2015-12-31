@@ -31,7 +31,7 @@
   ; Virtuoso uses "text/plain" as the MIME type of NTriples.
   ; Fuseki uses the standard MIME type "application/n-triples".
   [sparql-endpoint query]
-  (sparql-query sparql-endpoint query "text/plain" (chan 1 (map :body))))
+  (sparql-query sparql-endpoint query "application/n-triples, text/plain" (chan 1 (map :body))))
 
 (defn select-query
   "Execute a SPARQL SELECT `query` on `sparql-endpoint`."
