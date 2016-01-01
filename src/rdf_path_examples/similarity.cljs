@@ -8,6 +8,8 @@
             [cljs-time.format :refer [formatters parse]])
   (:import [goog Uri]))
 
+(declare dispatch-similarity)
+
 (def iri-part-weights
   "Pairs of function and weight to compute similarity of IRIs."
   [[#(.getDomain %) 0.68]
@@ -46,6 +48,28 @@
   [^ISeq scores]
   (reduce (fn [a b] (- (+ a b) (* a b))) scores))
 
+(defn- remove-id
+  "Remove @id from `resource`."
+  [resource]
+  (dissoc resource "@id"))
+
+(defn- wrap-literals
+  "Wrap plain literals in @value."
+  [resource]
+  (into {}
+        (for [[k v] resource]
+          [k
+           (if (vector? v)
+             (mapv wrap-literal v)
+             (wrap-literal v))])))
+
+(defn- wrap-type
+  "Wrap @type in `resource`."
+  [resource]
+  (if (contains? resource "@type")
+    (update-in resource ["@type"] (fn [v] {"@id" v}))
+    resource))
+
 (defmulti compute-similarity
   "Compute similarity of resources `a` and `b`. Dispatches on the inferred type of the resources.
   Inferred type of `a` and `b` must match, otherwise 0 similarity is returned."
@@ -56,14 +80,21 @@
         a-type))))
 
 (defmethod compute-similarity :referent
-  [find-resource-fn
+  [resolve-resource
    {a-id "@id" :as a}
    {b-id "@id" :as b}]
-  (let [find+wrap (comp wrap-literal find-resource-fn)]
-    (if (not= a-id b-id)
-      (average (map (partial compute-similarity find-resource-fn)
-                    (merge-matching (find+wrap a) (find+wrap b))))
-      1)))
+  ; Comparison by IRI
+  (if (not= a-id b-id)
+    ; Comparison by value
+    (let [find-resource (comp wrap-literals wrap-type remove-id resolve-resource)
+          a-desc (find-resource a)
+          b-desc (find-resource b)
+          matching-properties (merge-matching a-desc b-desc)]
+      (if (seq matching-properties)
+        (/ (reduce + (map (fn [[a b]] (dispatch-similarity resolve-resource a b)) matching-properties))
+           (- (+ (count a-desc) (count b-desc)) (count matching-properties)))
+        0))
+    1))
 
 (defmethod compute-similarity (xsd "decimal")
   [_
@@ -136,8 +167,33 @@
 (def compute-similarity'
   (memoize compute-similarity))
 
+(defmulti dispatch-similarity
+  "Dispatches similarity computation based on the types of the compared objects.
+  There may be either a single object or a collection of objects."
+  (fn [_ a b] (set [(type a) (type b)])))
+
+(defmethod dispatch-similarity #{PersistentArrayMap}
+  ; Comparing single objects.
+  [resolve-fn a b]
+  (compute-similarity' resolve-fn a b))
+
+(defmethod dispatch-similarity #{PersistentArrayMap PersistentVector}
+  ; Comparing single object and a collection of objects.
+  ; Aggregated by maximum.
+  [resolve-fn a b]
+  (let [[v m] (if (vector? a) [a b] [b a])]
+    (max (map (partial compute-similarity' resolve-fn m) v))))
+
+(defmethod dispatch-similarity #{PersistentVector}
+  ; Comparing collections of objects.
+  ; Computes Cartesian product of similarities and aggregates by maximum.
+  [resolve-fn a b]
+  (max (for [a' a
+             b' b]
+         (compute-similarity' resolve-fn a' b'))))
+
 (defn get-path-similarity
-  "Get similarity of paths `a` and `b` given the `find-resource-fn` that
+  "Get similarity of paths `a` and `b` given the `resolve-resource-fn` that
   finds resource description."
-  [^IFn find-resource-fn [a b]]
-  (average (map (partial compute-similarity' find-resource-fn) a b)))
+  [^IFn resolve-resource-fn [a b]]
+  (average (map (partial dispatch-similarity resolve-resource-fn) a b)))
