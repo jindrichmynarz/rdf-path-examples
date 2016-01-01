@@ -1,10 +1,10 @@
 (ns rdf-path-examples.path
   (:require [rdf-path-examples.schema :refer [Config PathGraph]]
-            [rdf-path-examples.sparql :refer [construct-query]]
+            [rdf-path-examples.sparql :refer [construct-query select-query]]
             [rdf-path-examples.jsonld :as jsonld]
             [rdf-path-examples.prefixes :refer [rdfs]]
             [rdf-path-examples.combinations :refer [combinations]]
-            [rdf-path-examples.util :refer [log render-template wrap-literal]]
+            [rdf-path-examples.util :refer [find-by-id log render-template resolve-resource]]
             [rdf-path-examples.similarity :refer [get-path-similarity]]
             [rdf-path-examples.diversity :refer [greedy-construction]]
             [schema.core :as s]
@@ -25,20 +25,12 @@
 
 (defonce node-data-query (read-file "node_data.mustache"))
 
+(defonce property-ranges-query (read-file "property_ranges.mustache"))
+
 (defn update-vals
   "Update values of keys `ks` in map `m` by applying function `f`."
   [m ks f]
   (reduce #(update-in % [%2] (partial f %2)) m ks))
-
-(defn find-by-id
-  "Helper function to find a resource identified with `id` in `resources`.
-  Returns `id` when resource is not found."
-  [resources id & {:keys [keywordized?]
-                   :or {keywordized? true}}]
-  (let [matches (filter (comp (partial = id) (if keywordized? :id #(get % "@id"))) resources)]
-    (if (seq matches)
-      (first matches)
-      id)))
 
 (def datatype?
   "Predicate testing whether resource identified with `id` is a datatype."
@@ -72,7 +64,7 @@
                                   path-edges)))))
 
 (defn put-path-first
-  "Put instance of Path first in the `path-graph`."
+  "Put the instance of Path first in the `path-graph`."
   [path-graph]
   (sort-by :type (fn [resource-type] (if (= resource-type "Path") -1 1)) path-graph))
 
@@ -109,24 +101,24 @@
   (filter (comp (partial = "Path") #(get % "@type"))))
 
 (defn extract-edges
-  "Transducer that extracts edges of a path, provided the `find-resource` function 
+  "Builds a transducer that extracts edges of a path, provided the `resolve-fn` function
   that retrieves resource description via its @id."
-  [find-resource]
+  [resolve-fn]
   (map (juxt #(get % "@id")
              (comp dedupe
                    (partial mapcat
-                            (comp (juxt #(get % "start") (comp wrap-literal #(get % "end"))) find-resource))
+                            (comp (juxt #(get % "start") #(get % "end"))
+                                  resolve-fn))
                    #(get % "edges")))))
 
 (defn get-path-data
   "Get path data in JSON-LD formatted as a Clojure data structure."
   [{:keys [graph-iri limit sparql-endpoint]}
-   path]
-  (go (let [formatted-path (<! (preprocess-path path))
-            query (render-template distinct-query :data (assoc formatted-path
-                                                               :graph-iri graph-iri
-                                                               :limit (* limit sampling-factor)))]
-        (-> (construct-query sparql-endpoint query)
+   formatted-path]
+  (let [query (render-template distinct-query :data (assoc formatted-path
+                                                           :graph-iri graph-iri
+                                                           :limit (* limit sampling-factor)))]
+    (go (-> (construct-query sparql-endpoint query)
             <!
             jsonld/rdf->jsonld
             <!
@@ -139,9 +131,9 @@
   "Get source data describing `path-nodes`."
   [{:keys [graph-iri sparql-endpoint]}
    path-nodes]
-  (go (let [query (render-template node-data-query :data {:nodes path-nodes 
-                                                          :graph-iri graph-iri})]
-        (-> (construct-query sparql-endpoint query)
+  (let [query (render-template node-data-query :data {:nodes path-nodes
+                                                      :graph-iri graph-iri})]
+    (go (-> (construct-query sparql-endpoint query)
             <!
             jsonld/rdf->jsonld
             <!
@@ -150,13 +142,19 @@
             js->clj
             (get "@graph")))))
 
-(defn find-resource
-  "Find `resource` in `data`."
-  [data
-   {id "@id" :as resource}]
-  (if (map? resource)
-    (find-by-id data id :keywordized? false)
-    {"@value" resource}))
+(defn get-property-ranges
+  [{:keys [graph-iri sparql-endpoint]}
+   formatted-path]
+  (let [path (update-in formatted-path
+                        [:vars]
+                        (fn [vars]
+                          (let [mark-index (- (count vars) 2)]
+                            (map-indexed (fn [index item]
+                                           (if (= index mark-index)
+                                             (assoc item :last true) item))
+                                         vars))))
+        query (render-template property-ranges-query :data (assoc path :graph-iri graph-iri))]
+    (select-query sparql-endpoint query)))
 
 (defmulti generate-examples (fn [config path callback] (:selection-method config)))
 
@@ -186,22 +184,27 @@
    path
    callback]
   {:pre [(s/validate Config config)]}
-  (go (let [path-data (<! (get-path-data (assoc config :limit limit) path))
-            find-path-data (partial find-resource path-data)
+  (go (let [formatted-path (<! (preprocess-path path))
+            ; property-ranges (<! (get-property-ranges config formatted-path))
+            path-data (<! (get-path-data (assoc config :limit limit) formatted-path))
+            find-path-data (partial resolve-resource path-data)
             path-map (into {} (comp filter-paths (extract-edges find-path-data)) path-data)
             paths (set (keys path-map))
             path-nodes (remove nil? (map #(get % "@id") (apply concat (vals path-map))))
             source-data (<! (get-source-data config path-nodes))
+            find-source-data (partial resolve-resource source-data)
+            ; Similarities are indexed by sets of the compared paths' IDs.
+            ; _ (.profile js/console "Compute similarity")
             path-similarities (into {} (map (juxt (comp set keys)
-                                                  (comp (partial get-path-similarity
-                                                                 (partial find-resource source-data)) vals))
+                                                  (comp (partial get-path-similarity find-source-data) vals))
                                             (combinations path-map 2)))
+            ; _ (.profileEnd js/console)
             path-example-ids (greedy-construction paths path-similarities limit)
             ; Reconstruct a JSON-LD serialization of path examples
             path-examples (map (comp find-path-data (fn [id] {"@id" id})) path-example-ids)
             path-example-edges (map find-path-data (mapcat #(get % "edges") path-examples))
-            path-example-nodes (map (partial find-resource source-data)
+            path-example-nodes (map find-source-data
                                     (remove nil? (mapcat (comp #(get % "@id") path-map) path-example-ids)))
             results (doto (clj->js {"@graph" (concat path-examples path-example-edges path-example-nodes)})
-                      (aset "@context" jsonld/example-context))]
+                      (aset "@context" (aget jsonld/example-context "@context")))]
         (callback results))))
