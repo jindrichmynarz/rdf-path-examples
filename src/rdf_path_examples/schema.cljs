@@ -22,22 +22,21 @@
 
 (def Node
   "A node in path edge"
-  (s/conditional map? {:type s/Str ; A node must be explicitly typed.
-                       s/Keyword s/Any} ; Optional node predicates (include :type)
-                 string? s/Str))
+  {:type s/Str ; A node must be explicitly typed.
+   s/Keyword s/Any}) ; Optional node predicates (include :type)
 
 (def Edge
   "An edge in RDF path"
-  {(s/optional-key :type) (s/enum "Edge")
-   :start Node
+  {:start Node
    :edgeProperty s/Str
-   :end Node})
+   :end Node
+   s/Keyword s/Any})
 
 (def Path
   "RDF path"
   {:type (s/enum "Path") ; Path must be explicitly typed.
    :edges [Edge]
-   (s/optional-key :id) s/Str})
+   s/Keyword s/Any})
 
 (def PathGraph
   "Graph of RDF paths"
