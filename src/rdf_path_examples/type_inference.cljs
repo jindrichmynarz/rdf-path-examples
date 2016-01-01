@@ -2,8 +2,6 @@
   (:require [rdf-path-examples.prefixes :refer [xsd]]
             [rdf-path-examples.util :refer [duration-regex]]))
 
-; TODO: Implement type inference only for specific types supported by similarity module.
-
 (def iri-regex
   ; Copyright (c) 2010-2013 Diego Perini, MIT licensed
   ; https://gist.github.com/dperini/729294

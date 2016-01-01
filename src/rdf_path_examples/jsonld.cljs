@@ -25,15 +25,6 @@
                        (fn [_ compacted] (put! out compacted)))
     out))
 
-(defn jsonld->rdf
-  "Convert JSON-LD to RDF serialized in NQuads"
-  [json]
-  (let [out (chan 1)]
-    (js/jsonld.toRDF json
-                     nquads
-                     (fn [_ rdf] (put! out rdf)))
-    out))
-
 (defn rdf->jsonld
   "Convert RDF in NQuads to JSON-LD"
   [rdf]
