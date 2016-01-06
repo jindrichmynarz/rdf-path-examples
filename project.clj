@@ -34,6 +34,14 @@
                          :externs ["jsonld-externs.js"]
                          :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"
                                          :provides ["jsonld"]}]}}
+             :eval {
+              :source-paths ["src" "evaluation"]
+              :compiler {:main rdf-path-examples.evaluation
+                         :output-to "main.js"
+                         :target :nodejs
+                         :externs ["jsonld-externs.js"]
+                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.3/jsonld.js"
+                                         :provides ["jsonld"]}]}}
              :min {
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/rdf_path_examples.js"
@@ -41,7 +49,7 @@
                          :optimizations :advanced
                          :pretty-print false
                          :externs ["jsonld-externs.js"]
-                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"
+                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.3/jsonld.js"
                                          :provides ["jsonld"]}]}}
              :test {
               :source-paths ["src" "test"]
@@ -51,5 +59,5 @@
                          :optimizations :whitespace
                          :pretty-print true
                          :externs ["jsonld-externs.js"]
-                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"
+                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.3/jsonld.js"
                                          :provides ["jsonld"]}]}}}})
