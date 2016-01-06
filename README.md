@@ -97,6 +97,8 @@ callback(examples);
 };
 ```
 
+If no path examples match the provided path, then an empty array is returned.
+
 ## Tests
 
 You can run tests using [lein-doo](https://github.com/bensu/doo), for example by `lein doo phantom test once`.

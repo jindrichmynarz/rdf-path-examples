@@ -133,14 +133,16 @@
    path-nodes]
   (let [query (render-template node-data-query :data {:nodes path-nodes
                                                       :graph-iri graph-iri})]
-    (go (-> (construct-query sparql-endpoint query)
-            <!
-            jsonld/rdf->jsonld
-            <!
-            (jsonld/compact-jsonld (js-obj)) ; Compact with empty context to coerce compact representation.
-            <!
-            js->clj
-            (get "@graph")))))
+    (go (let [response (-> (construct-query sparql-endpoint query)
+                           <!
+                           jsonld/rdf->jsonld
+                           <!)]
+          (when-not (empty? response)
+            (-> response
+                (jsonld/compact-jsonld #js {}) ; Compact with empty context to coerce compact representation.
+                <!
+                js->clj
+                (get "@graph")))))))
 
 (defn get-property-ranges
   [{:keys [graph-iri sparql-endpoint]}
@@ -169,13 +171,16 @@
             query (render-template random-query :data (assoc formatted-path
                                                              :graph-iri graph-iri
                                                              :limit limit))
-            query-results (<! (construct-query sparql-endpoint query))
-            compacted-results (-> query-results
-                                  jsonld/rdf->jsonld
-                                  <!
-                                  (jsonld/compact-jsonld jsonld/example-context)
-                                  <!)]
-        (callback compacted-results))))
+            query-results (-> (construct-query sparql-endpoint query)
+                              <!
+                              jsonld/rdf->jsonld
+                              <!)
+            result (if (empty? query-results)
+                     query-results
+                     (-> query-results
+                         (jsonld/compact-jsonld jsonld/example-context)
+                         <!))]
+        (callback result))))
 
 (defmethod generate-examples "distinct"
   [{:keys [limit]
@@ -186,25 +191,27 @@
   {:pre [(s/validate Config config)]}
   (go (let [formatted-path (<! (preprocess-path path))
             ; property-ranges (<! (get-property-ranges config formatted-path))
-            path-data (<! (get-path-data (assoc config :limit limit) formatted-path))
-            find-path-data (partial resolve-resource path-data)
-            path-map (into {} (comp filter-paths (extract-edges find-path-data)) path-data)
-            paths (set (keys path-map))
-            path-nodes (remove nil? (map #(get % "@id") (apply concat (vals path-map))))
-            source-data (<! (get-source-data config path-nodes))
-            find-source-data (partial resolve-resource source-data)
-            ; Similarities are indexed by sets of the compared paths' IDs.
-            ; _ (.profile js/console "Compute similarity")
-            path-similarities (into {} (map (juxt (comp set keys)
-                                                  (comp (partial get-path-similarity find-source-data) vals))
-                                            (combinations path-map 2)))
-            ; _ (.profileEnd js/console)
-            path-example-ids (greedy-construction paths path-similarities limit)
-            ; Reconstruct a JSON-LD serialization of path examples
-            path-examples (map (comp find-path-data (fn [id] {"@id" id})) path-example-ids)
-            path-example-edges (map find-path-data (mapcat #(get % "edges") path-examples))
-            path-example-nodes (map find-source-data
-                                    (remove nil? (mapcat (comp #(get % "@id") path-map) path-example-ids)))
-            results (doto (clj->js {"@graph" (concat path-examples path-example-edges path-example-nodes)})
-                      (aset "@context" (aget jsonld/example-context "@context")))]
-        (callback results))))
+            path-data (<! (get-path-data (assoc config :limit limit) formatted-path))]
+        (if-not (empty? path-data)
+          (let [find-path-data (partial resolve-resource path-data)
+                path-map (into {} (comp filter-paths (extract-edges find-path-data)) path-data)
+                paths (set (keys path-map))
+                path-nodes (remove nil? (map #(get % "@id") (apply concat (vals path-map))))
+                source-data (<! (get-source-data config path-nodes))
+                find-source-data (partial resolve-resource source-data)
+                ; Similarities are indexed by sets of the compared paths' IDs.
+                ; _ (.profile js/console "Compute similarity")
+                path-similarities (into {} (map (juxt (comp set keys)
+                                                      (comp (partial get-path-similarity find-source-data) vals))
+                                                (combinations path-map 2)))
+                ; _ (.profileEnd js/console)
+                path-example-ids (greedy-construction paths path-similarities limit)
+                ; Reconstruct a JSON-LD serialization of path examples
+                path-examples (map (comp find-path-data (fn [id] {"@id" id})) path-example-ids)
+                path-example-edges (map find-path-data (mapcat #(get % "edges") path-examples))
+                path-example-nodes (map find-source-data
+                                        (remove nil? (mapcat (comp #(get % "@id") path-map) path-example-ids)))
+                results (doto (clj->js {"@graph" (concat path-examples path-example-edges path-example-nodes)})
+                          (aset "@context" (aget jsonld/example-context "@context")))]
+            (callback results))
+          (callback path-data)))))

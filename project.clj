@@ -32,7 +32,7 @@
                          :output-dir "resources/public/js/compiled/out"
                          :source-map-timestamp true
                          :externs ["jsonld-externs.js"]
-                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"
+                         :foreign-libs [{:file "http://cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.3/jsonld.js"
                                          :provides ["jsonld"]}]}}
              :eval {
               :source-paths ["src" "evaluation"]
