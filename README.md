@@ -21,12 +21,12 @@ var config = {
 
 `sparql-endpoint` attribute must provide a URL of a SPARQL endpoint allows to retrieve query results serialized in NTriples (currently only [OpenLink Virtuoso](https://github.com/openlink/virtuoso-opensource) is supported). Note that querying the endpoint's URL must be allowed by the [same-origin policy](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy) or [cross-origin access](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) must be enabled. `graph-iri` is the IRI of the named graph from which instances of the provided RDF path will be retrieved. The only currently supported selection method is `random`, which simply retrieves random examples of the supplied path's instantiations. The configuration can optionally provide the `limit` attribute that specifies the number of examples to be retrieved. This attribute defaults to 5.
 
-`path` is a JavaScript object representing an RDF path serialized in [JSON-LD](http://json-ld.org/) using the [RDF Path vocabulary](https://github.com/jindrichmynarz/rdf-path-examples/blob/master/resources/rdf_path.ttl). For example, here is a path from `gr:BusinessEntity` to `xsd:string` via `foaf:page`:
+`path` is a JavaScript object representing an RDF path serialized in [JSON-LD](http://json-ld.org/) using the [RDF Path vocabulary](https://w3id.org/lodsight/rdf-path). For example, here is a path from `gr:BusinessEntity` to `xsd:string` via `foaf:page`:
 
 ```js
 {
   "@context": {
-    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "@vocab": "https://w3id.org/lodsight/rdf-path#",
     "foaf": "http://xmlns.com/foaf/0.1/",
     "gr": "http://purl.org/goodrelations/v1#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
@@ -67,7 +67,7 @@ callback(examples);
 ```js
 {
   "@context": {
-    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "@vocab": "https://w3id.org/lodsight/rdf-path",
     "foaf": "http://xmlns.com/foaf/0.1/",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "start": {"@type": "@id"},

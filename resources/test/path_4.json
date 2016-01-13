@@ -1,6 +1,6 @@
 {
   "@context": {
-    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "@vocab": "https://w3id.org/lodsight/rdf-path#",
     "dbo": "http://dbpedia.org/ontology/",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",

@@ -1,6 +1,6 @@
 {
   "@context": {
-    "@vocab": "http://purl.org/lodsight/rdf-path#",
+    "@vocab": "https://w3id.org/lodsight/rdf-path#",
     "graph": "@graph",
     "id": "@id",
     "type": "@type",
