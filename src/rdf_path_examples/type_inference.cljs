@@ -1,6 +1,8 @@
 (ns rdf-path-examples.type-inference
-  (:require [rdf-path-examples.prefixes :refer [xsd]]
-            [rdf-path-examples.util :refer [duration-regex]]))
+  (:require [rdf-path-examples.xml-schema :as xsd]
+            [rdf-path-examples.prefixes :as prefix]
+            [rdf-path-examples.util :refer [duration-regex]]
+            [clojure.string :as string]))
 
 (def iri-regex
   ; Copyright (c) 2010-2013 Diego Perini, MIT licensed
@@ -14,10 +16,10 @@
   "Infers data type of `literal` based on matching to regular expressions."
   [^String literal]
   (condp re-matches literal
-    #"^\d{4}-\d{2}-\d{2}$" (xsd "date")
-    #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+\-]\d{2}:\d{2}|Z)?$" (xsd "dateTime")
-    duration-regex (xsd "duration")
-    iri-regex (xsd "anyURI")
+    #"^\d{4}-\d{2}-\d{2}$" ::xsd/date
+    #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+\-]\d{2}:\d{2}|Z)?$" ::xsd/dateTime
+    duration-regex ::xsd/duration
+    iri-regex ::xsd/anyURI
     :literal))
 
 (defn infer-type
@@ -25,7 +27,9 @@
   [{value "@value"
     datatype "@datatype"}]
   (cond (nil? value) :referent
-        datatype datatype
-        (number? value) (xsd "decimal")
-        (or (true? value) (false? value)) (xsd "boolean")
+        (and datatype
+             (zero? (.indexOf datatype (prefix/xsd)))) (keyword 'rdf-path-examples.xml-schema
+                                                                (string/replace datatype (prefix/xsd) ""))
+        (number? value) ::xsd/decimal
+        (or (true? value) (false? value)) ::xsd/boolean
         :else (infer-datatype value)))
