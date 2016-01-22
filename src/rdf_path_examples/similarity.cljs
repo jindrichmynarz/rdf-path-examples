@@ -150,15 +150,17 @@
                            1))))
                   iri-part-weights))))
 
-(defmethod compute-similarity :literal
+(defmethod compute-similarity ::xsd/string
   [_
    {a-lang "@language"
     a-value "@value"}
    {b-lang "@language"
     b-value "@value"}]
-  (if (every? #{"en"} [a-lang b-lang])
-    (jaro-winkler (porter a-value) (porter b-value))
-    (jaro-winkler a-value b-value)))
+  (let [a-str (str a-value) ; Guard against non-string inputs
+        b-str (str b-value)]
+    (if (every? #{"en"} [a-lang b-lang])
+      (jaro-winkler (porter a-str) (porter b-str))
+      (jaro-winkler a-str b-str))))
 
 (defmethod compute-similarity :default
   ; If no type matches, compared resources are treated as dissimilar.

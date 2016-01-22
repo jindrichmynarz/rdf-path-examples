@@ -21,7 +21,7 @@
     #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+\-]\d{2}:\d{2}|Z)?$" ::xsd/dateTime
     duration-regex ::xsd/duration
     iri-regex ::xsd/anyURI
-    :literal))
+    ::xsd/string))
 
 (defn infer-type
   "Infers a data type of JSON-LD value."

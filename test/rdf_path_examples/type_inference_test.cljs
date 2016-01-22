@@ -23,7 +23,7 @@
          "2015-12-28T12:03:00+01:00" ::xsd/dateTime
          "P7Y7D12.34S" ::xsd/duration
          "http://example.com:8080/path/to/page" ::xsd/anyURI
-         "example.com" :literal))
+         "example.com" ::xsd/string))
   (testing "Non-matching literals"
     (are [literal literal-type] (not= (infer/infer-datatype literal) literal-type)
          "example.com" ::xsd/anyURI)))
