@@ -1,8 +1,7 @@
 (ns rdf-path-examples.similarity
-  (:require [rdf-path-examples.type-inference :refer [infer-type]] 
+  (:require [rdf-path-examples.type-inference :refer [infer-type lowest-common-ancestor]] 
             [rdf-path-examples.util :refer [duration-regex log wrap-literal]]
             [rdf-path-examples.xml-schema :as xsd]
-            [clojure.set :refer [intersection]]
             [clj-fuzzy.stemmers :refer [porter]]
             [clj-fuzzy.metrics :refer [jaro-winkler]]
             [cljs-time.core :refer [date-time]]
@@ -34,17 +33,6 @@
   ; TODO: Promote overflows by subtracting and modding: [js/Infinity 12 31? 24 60]
   (when-let [match (re-matches duration-regex duration)]
     (apply date-time (map js/parseFloat match))))
-
-(defn lowest-common-ancestor
-  "Compute lowest common ancestor in the type hierarchy of `a` and `b`."
-  [a b]
-  (cond (isa? a b) b
-        (isa? b a) a
-        :else (let [a-anc (conj (set (ancestors a)) a)
-                    b-anc (conj (set (ancestors b)) b)
-                    ac (intersection a-anc b-anc)]
-                (when (seq ac)
-                  (apply (partial max-key (comp count ancestors)) ac)))))
 
 (defn merge-matching
   "Merge values of matching keys in maps `a` and `b` into a sequence of vectors."

@@ -18,7 +18,7 @@
         results-channel))
 
 (def select-results-channel
-  "Channel that extracts values from application/sparql-results+json format."
+  "Creates a channel that extracts values from application/sparql-results+json format."
   (letfn [(extract-values [result] (into {} (map (fn [[k v]] [k (:value v)]) result)))]
     (fn []
       (chan 1 (map (comp (partial map extract-values) :bindings :results :body))))))

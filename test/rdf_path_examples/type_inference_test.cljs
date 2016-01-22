@@ -1,12 +1,12 @@
 (ns rdf-path-examples.type-inference-test
-  (:require [rdf-path-examples.type-inference :refer [infer-datatype infer-type]]
+  (:require [rdf-path-examples.type-inference :as infer]
             [rdf-path-examples.xml-schema :as xsd]
             [rdf-path-examples.prefixes :as prefix]
             [cljs.test :refer-macros [are deftest is testing]]))
 
 (deftest infer-type-test
   (testing "Matching resources"
-    (are [resource resource-type] (= (infer-type resource) resource-type)
+    (are [resource resource-type] (= (infer/infer-type resource) resource-type)
          {"@id" "_:b1234"} :referent
          {"@value" "https://example.com:3030/path/to/resource"} ::xsd/anyURI
          {"@value" "2000-01-01"
@@ -18,12 +18,24 @@
 
 (deftest infer-datatype-test
   (testing "Matching literals"
-    (are [literal literal-type] (= (infer-datatype literal) literal-type)
+    (are [literal literal-type] (= (infer/infer-datatype literal) literal-type)
          "2000-01-01" ::xsd/date
          "2015-12-28T12:03:00+01:00" ::xsd/dateTime
          "P7Y7D12.34S" ::xsd/duration
          "http://example.com:8080/path/to/page" ::xsd/anyURI
          "example.com" :literal))
   (testing "Non-matching literals"
-    (are [literal literal-type] (not= (infer-datatype literal) literal-type)
+    (are [literal literal-type] (not= (infer/infer-datatype literal) literal-type)
          "example.com" ::xsd/anyURI)))
+
+(deftest lowest-common-ancestor-test
+  (derive ::a ::b)
+  (derive ::b ::c)
+  (derive ::d ::c)
+  (derive ::c ::e)
+  (are [a b ancestor] (= (infer/lowest-common-ancestor a b) ancestor)
+       ::a ::d ::c
+       ::c ::e ::e
+       ::a ::non-existent nil
+       :referent :referent :referent))
+
