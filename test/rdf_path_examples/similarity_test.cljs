@@ -1,9 +1,20 @@
 (ns rdf-path-examples.similarity-test
-  (:require [rdf-path-examples.similarity :refer [compute-similarity]]
+  (:require [rdf-path-examples.similarity :as sim]
             [cljs.test :refer-macros [are deftest is testing]]))
 
+(deftest lowest-common-ancestor-test
+  (derive ::a ::b)
+  (derive ::b ::c)
+  (derive ::d ::c)
+  (derive ::c ::e)
+  (are [a b ancestor] (= (sim/lowest-common-ancestor a b) ancestor)
+       ::a ::d ::c
+       ::c ::e ::e
+       ::a ::non-existent nil
+       :referent :referent :referent))
+
 (deftest compute-similarity-test
-  (let [similarity-fn (partial compute-similarity (fn [_]))] ; Mocked similarity function
+  (let [similarity-fn (partial sim/compute-similarity (fn [_]))] ; Mocked similarity function
     (testing "Equivalent resources have similarity of 1"
       (are [resource] (= (similarity-fn resource resource) 1)
            {"@value" 1}
