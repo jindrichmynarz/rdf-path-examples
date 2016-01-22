@@ -48,6 +48,7 @@
 
 (defn is-ordinal?
   "Predicate that tests if `resource` is from an ordinal range; e.g., a number."
-  [resource]
-  (let [resource-type (infer-type resource)]
-    (contains? xsd/ordinal-data-types resource-type)))
+  [resource-type]
+  (or (xsd/ordinal-data-types resource-type)
+      (some (partial xsd/ordinal-data-types)
+            (map (partial lowest-common-ancestor resource-type) xsd/ordinal-data-types))))

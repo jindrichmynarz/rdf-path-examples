@@ -42,3 +42,16 @@
 (derive ::unsignedInt ::unsignedLong)
 (derive ::unsignedShort ::unsignedInt)
 (derive ::unsignedByte ::unsignedShort)
+
+(def ordinal-data-types #{::date
+                          ::dateTime
+                          ::decimal
+                          ::double
+                          ::duration
+                          ::float
+                          ::gDay
+                          ::gMonth
+                          ::gMonthDay
+                          ::gYear
+                          ::gYearMonth
+                          ::time})
