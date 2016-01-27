@@ -36,6 +36,7 @@
   (are [a b ancestor] (= (infer/lowest-common-ancestor a b) ancestor)
        ::a ::d ::c
        ::c ::e ::e
+       ::b ::d ::c
        ::a ::non-existent nil
        :referent :referent :referent))
 
