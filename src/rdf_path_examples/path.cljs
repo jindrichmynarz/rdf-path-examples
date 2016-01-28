@@ -7,6 +7,7 @@
             [rdf-path-examples.util :refer [find-by-id log render-template resolve-resource]]
             [rdf-path-examples.similarity :refer [get-path-similarity]]
             [rdf-path-examples.diversity :refer [greedy-construction]]
+            [rdf-path-examples.type-inference :refer [is-ordinal?]]
             [schema.core :as s]
             [clojure.set :refer [union]]
             [cljs.core.async :refer [<!]])
@@ -26,6 +27,12 @@
 (defonce node-data-query (read-file "node_data.mustache"))
 
 (defonce property-ranges-query (read-file "property_ranges.mustache"))
+
+(defn decompose-map
+  "Decompose map `m` into a sequence of key-value pairs.
+  <http://stackoverflow.com/questions/35064875/decompose-nested-maps-into-key-value-pairs/35065444#35065444>"
+  [m]
+  (mapcat (partial tree-seq (comp map? val) val) m))
 
 (defn update-vals
   "Update values of keys `ks` in map `m` by applying function `f`."
@@ -100,6 +107,12 @@
   "Transducer filtering resources that instantiate Path."
   (filter (comp (partial = "Path") #(get % "@type"))))
 
+(defn zip-paths
+  "Create a transducer that zips edge properties from `formatted-path` with edge nodes."
+  [formatted-path]
+  (let [edge-properties (map :edgeProperty (:path formatted-path))]
+    (map (fn [[id objects]] [id (map vector edge-properties objects)]))))
+
 (defn extract-edges
   "Builds a transducer that extracts edges of a path, provided the `resolve-fn` function
   that retrieves resource description via its @id."
@@ -110,6 +123,13 @@
                             (comp (juxt #(get % "start") #(get % "end"))
                                   resolve-fn))
                    #(get % "edges")))))
+
+(defn extract-ordinal-properties
+  "Extracts ordinal properties out of `path-data`."
+  [path-data]
+  (comp (filter (comp (partial = "Edge") #(get % "@type")))
+        (map (juxt #(get % "edgeProperty") #(get % "end")))
+        (filter (comp is-ordinal? second))))
 
 (defn get-path-data
   "Get path data in JSON-LD formatted as a Clojure data structure."
@@ -190,21 +210,25 @@
    callback]
   {:pre [(s/validate Config config)]}
   (go (let [formatted-path (<! (preprocess-path path))
-            ; property-ranges (<! (get-property-ranges config formatted-path))
+            edge-properties (map :edgeProperty (:path formatted-path))
             path-data (<! (get-path-data (assoc config :limit limit) formatted-path))]
-        (if-not (empty? path-data)
+        (if path-data
           (let [find-path-data (partial resolve-resource path-data)
-                path-map (into {} (comp filter-paths (extract-edges find-path-data)) path-data)
+                path-map (into {} (comp filter-paths
+                                        (extract-edges find-path-data)
+                                        (zip-paths formatted-path))
+                               path-data)
+                ;_ (log (mapcat second path-map))
                 paths (set (keys path-map))
-                path-nodes (remove nil? (map #(get % "@id") (apply concat (vals path-map))))
+                path-nodes (remove nil? (mapcat (comp (partial map (comp #(get % "@id") second)) second)
+                                                path-map))
                 source-data (<! (get-source-data config path-nodes))
+                ;_ (log (decompose-map source-data))
                 find-source-data (partial resolve-resource source-data)
                 ; Similarities are indexed by sets of the compared paths' IDs.
-                ; _ (.profile js/console "Compute similarity")
                 path-similarities (into {} (map (juxt (comp set keys)
                                                       (comp (partial get-path-similarity find-source-data) vals))
                                                 (combinations path-map 2)))
-                ; _ (.profileEnd js/console)
                 path-example-ids (greedy-construction paths path-similarities limit)
                 ; Reconstruct a JSON-LD serialization of path examples
                 path-examples (map (comp find-path-data (fn [id] {"@id" id})) path-example-ids)
@@ -214,4 +238,4 @@
                 results (doto (clj->js {"@graph" (concat path-examples path-example-edges path-example-nodes)})
                           (aset "@context" (aget jsonld/example-context "@context")))]
             (callback results))
-          (callback path-data)))))
+          (callback #js [])))))
