@@ -39,9 +39,9 @@
   "An RDF resource"
   (infer-type [resource] "resource type"))
 
-(extend-type array
+(extend-type PersistentVector
   Resource
-  ; FIXME: We expect the array ranges to be homogeneous.
+  ; We expect the vector's ranges to be homogeneous.
   ; Their data type is inferred from their first member.
   (infer-type [[sample-resource & _]]
     (infer-type sample-resource)))
