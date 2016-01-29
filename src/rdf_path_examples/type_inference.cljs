@@ -47,8 +47,8 @@
                   (apply (partial max-key (comp count ancestors)) ac)))))
 
 (defn is-ordinal?
-  "Predicate that tests if `resource` is from an ordinal range; e.g., a number."
-  [resource-type]
-  (or (xsd/ordinal-data-types resource-type)
+  "Test if `data-type` is ordinal; e.g., a number."
+  [data-type]
+  (or (xsd/ordinal-data-types date-type)
       (some (partial xsd/ordinal-data-types)
-            (map (partial lowest-common-ancestor resource-type) xsd/ordinal-data-types))))
+            (map (partial lowest-common-ancestor data-type) xsd/ordinal-data-types))))
