@@ -1,14 +1,34 @@
 (ns rdf-path-examples.similarity
-  (:require [rdf-path-examples.type-inference :refer [infer-type lowest-common-ancestor]] 
+  (:require [rdf-path-examples.type-inference :refer [infer-type lowest-common-ancestor]]
             [rdf-path-examples.util :refer [duration-regex log wrap-literal]]
             [rdf-path-examples.xml-schema :as xsd]
             [clj-fuzzy.stemmers :refer [porter]]
             [clj-fuzzy.metrics :refer [jaro-winkler]]
-            [cljs-time.core :refer [date-time]]
+            [cljs-time.core :refer [date-time in-seconds interval minus period plus]]
             [cljs-time.format :refer [formatters parse]])
   (:import [goog Uri]))
 
 (declare dispatch-similarity)
+
+; ----- Private vars -----
+
+(def ^:private fixed-date
+  "Just a fixed date for date-time arithmetics."
+  (date-time 2000 1 1))
+
+; ----- Private functions -----
+
+(defn- remove-id
+  "Remove @id from `resource`."
+  [resource]
+  (dissoc resource "@id"))
+
+(defn- trim-last-char
+  "Trim last character in string `s`."
+  [s]
+  (if (string? s)
+    (subs s 0 (dec (count s)))
+    s))
 
 (def iri-part-weights
   "Pairs of function and weight to compute similarity of IRIs."
@@ -27,13 +47,27 @@
        (count coll))
     0))
 
-(defn duration->date-time
-  "Cast xsd:duration `duration` as date time."
+(defn duration->period
+  "Parse xsd:duration `duration` to cljs-time.core/Period."
   [^String duration]
-  ; TODO: Promote overflows by subtracting and modding: [js/Infinity 12 31? 24 60]
   (when-let [match (re-matches duration-regex duration)]
-    (apply date-time (map js/parseFloat match))))
+    (let [[years months days hours minutes seconds] (map (comp #(when % (js/parseFloat %)) trim-last-char)
+                                                    ; First match is the whole matching string,
+                                                    ; so we discard it.
+                                                    (rest match))]
+      (period :years years
+              :months months
+              :days days
+              :hours hours
+              :minutes minutes
+              :seconds seconds))))
 
+(defn duration->date-time
+  "Cast `duration` as date time."
+  [^String duration]
+  (let [change-fn (if (= (first duration) "-") minus plus)]
+    (change-fn fixed-date (duration->period duration))))
+    
 (defn merge-matching
   "Merge values of matching keys in maps `a` and `b` into a sequence of vectors."
   [^IMap a
@@ -48,18 +82,8 @@
   [a b & {:keys [maximum]
           :or {maximum 10000}}]
   (min (- 1 (/ (js/Math.abs (- a b))
-               maximum)) ; Hard-coded maximum value spread 
-       1)) ; Maximum bound is necessary because of the hard-coded maximum that may be surpassed. 
-
-(defn probabilistic-sum
-  "Compute probabilistic sum of `scores`."
-  [^ISeq scores]
-  (reduce (fn [a b] (- (+ a b) (* a b))) scores))
-
-(defn- remove-id
-  "Remove @id from `resource`."
-  [resource]
-  (dissoc resource "@id"))
+               maximum)) ; Hard-coded maximum value spread
+       1)) ; Maximum bound is necessary because of the hard-coded maximum that may be surpassed.
 
 (defn- wrap-literals
   "Wrap plain literals in @value."
@@ -133,7 +157,15 @@
   [_
    {a "@value"}
    {b "@value"}]
-  (if (= a b) 1 0)) ; TODO
+  (if (= a b) ; Short-circuit the computation for equivalent operands.
+    1
+    (let [a-dt (duration->date-time a)
+          b-dt (duration->date-time b)]
+      (if (and a-dt b-dt)
+        (in-seconds (if (<= (.getTime a-dt) (.getTime b-dt))
+                      (interval a-dt b-dt)
+                      (interval b-dt a-dt)))
+        0))))
 
 (defmethod compute-similarity ::xsd/anyURI
   [_
