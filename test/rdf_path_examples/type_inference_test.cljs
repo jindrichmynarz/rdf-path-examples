@@ -10,7 +10,9 @@
          {"@id" "_:b1234"} :referent
          {"@value" "https://example.com:3030/path/to/resource"} ::xsd/anyURI
          {"@value" "2000-01-01"
-          "@datatype" (prefix/xsd "date")} ::xsd/date
+          "@type" (prefix/xsd "date")} ::xsd/date
+         {"@type" (prefix/xsd "decimal") 
+          "@value" "113496506.71"} ::xsd/decimal
          {"@value" "2015-12-30"} ::xsd/date
          {"@value" 1} ::xsd/decimal
          {"@value" 1.2} ::xsd/decimal

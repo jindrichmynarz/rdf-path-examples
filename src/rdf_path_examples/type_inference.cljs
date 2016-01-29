@@ -5,6 +5,18 @@
             [clojure.set :refer [intersection]]
             [clojure.string :as string]))
 
+; ----- Private functions -----
+
+(defn- xml-schema-data-type?
+  "Predicate testing if `data-type` is from XML Schema."
+  [data-type]
+  (zero? (.indexOf data-type (prefix/xsd))))
+
+(defn- data-type->xml-schema
+  "Coerce a XML Schema `data-type`."
+  [data-type]
+  (keyword 'rdf-path-examples.xml-schema (string/replace data-type (prefix/xsd) "")))
+
 (def iri-regex
   ; Copyright (c) 2010-2013 Diego Perini, MIT licensed
   ; https://gist.github.com/dperini/729294
@@ -23,17 +35,41 @@
     iri-regex ::xsd/anyURI
     ::xsd/string))
 
-(defn infer-type
-  "Infers a data type of JSON-LD value."
-  [{value "@value"
-    datatype "@datatype"}]
-  (cond (nil? value) :referent
-        (and datatype
-             (zero? (.indexOf datatype (prefix/xsd)))) (keyword 'rdf-path-examples.xml-schema
-                                                                (string/replace datatype (prefix/xsd) ""))
-        (number? value) ::xsd/decimal
-        (or (true? value) (false? value)) ::xsd/boolean
-        :else (infer-datatype value)))
+(defprotocol Resource
+  "An RDF resource"
+  (infer-type [resource] "resource type"))
+
+(extend-type array
+  Resource
+  ; FIXME: We expect the array ranges to be homogeneous.
+  ; Their data type is inferred from their first member.
+  (infer-type [[sample-resource & _]]
+    (infer-type sample-resource)))
+
+(extend-type boolean
+  Resource
+  (infer-type [_] ::xsd/boolean))
+
+(extend-type number
+  Resource
+  (infer-type [_] ::xsd/decimal))
+
+(extend-type string
+  Resource
+  (infer-type [value]
+    (cond (number? value) ::xsd/decimal
+          (or (true? value) (false? value)) ::xsd/boolean
+          :else (infer-datatype value))))
+
+(extend-type PersistentArrayMap
+  Resource
+  (infer-type [{value "@value"
+                resource-type "@type"}]
+    (cond (nil? value)
+          :referent
+          (and resource-type (xml-schema-data-type? resource-type))
+          (data-type->xml-schema resource-type)
+          :else (infer-type value))))
 
 (defn lowest-common-ancestor
   "Compute lowest common ancestor in the type hierarchy of `a` and `b`."
@@ -49,6 +85,6 @@
 (defn is-ordinal?
   "Test if `data-type` is ordinal; e.g., a number."
   [data-type]
-  (or (xsd/ordinal-data-types date-type)
+  (or (xsd/ordinal-data-types data-type)
       (some (partial xsd/ordinal-data-types)
             (map (partial lowest-common-ancestor data-type) xsd/ordinal-data-types))))
