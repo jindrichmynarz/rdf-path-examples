@@ -23,6 +23,12 @@
   [resource]
   (dissoc resource "@id"))
 
+(def ^:private parse-date
+  (partial parse (:date formatters)))
+
+(def ^:private parse-date-time
+  (partial parse (:date-time formatters)))
+
 (defn- trim-last-char
   "Trim last character in string `s`."
   [s]
@@ -103,8 +109,8 @@
     resource))
 
 (defmulti compute-similarity
-  "Compute similarity of resources `a` and `b`. Dispatches on the inferred type of the resources.
-  Inferred type of `a` and `b` must match, otherwise 0 similarity is returned."
+  "Compute similarity of resources `a` and `b`. Dispatches on the lowest common ancestor
+  of the inferred types of the compared resources."
   (fn [_ ^IMap a ^IMap b]
     (let [a-type (infer-type a)
           b-type (infer-type b)]
@@ -143,15 +149,13 @@
   [_
    {a "@value"}
    {b "@value"}]
-  (let [parse-fn (partial parse (:date formatters))]
-    (normalized-bounded-difference (parse-fn a) (parse-fn b) :maximum 10000000)))
+  (normalized-bounded-difference (parse-date a) (parse-date b) :maximum 10000000))
 
 (defmethod compute-similarity ::xsd/dateTime
   [_
    {a "@value"}
    {b "@value"}]
-  (let [parse-fn (partial parse (:date-time formatters))]
-    (normalized-bounded-difference (parse-fn a) (parse-fn b) :maximum 10000000)))
+  (normalized-bounded-difference (parse-date-time a) (parse-date-time b) :maximum 10000000))
 
 (defmethod compute-similarity ::xsd/duration
   [_
@@ -190,9 +194,11 @@
     b-value "@value"}]
   (let [a-str (str a-value) ; Guard against non-string inputs
         b-str (str b-value)]
-    (if (every? #{"en"} [a-lang b-lang])
-      (jaro-winkler (porter a-str) (porter b-str))
-      (jaro-winkler a-str b-str))))
+    (if (= a-str b-str)
+      1
+      (if (every? #{"en"} [a-lang b-lang])
+        (jaro-winkler (porter a-str) (porter b-str))
+        (jaro-winkler a-str b-str)))))
 
 (defmethod compute-similarity :default
   ; If no type matches, compared resources are treated as dissimilar.
