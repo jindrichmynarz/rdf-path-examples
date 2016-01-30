@@ -16,27 +16,7 @@
   "Just a fixed date for date-time arithmetics."
   (date-time 2000 1 1))
 
-; ----- Private functions -----
-
-(defn- remove-id
-  "Remove @id from `resource`."
-  [resource]
-  (dissoc resource "@id"))
-
-(def ^:private parse-date
-  (partial parse (:date formatters)))
-
-(def ^:private parse-date-time
-  (partial parse (:date-time formatters)))
-
-(defn- trim-last-char
-  "Trim last character in string `s`."
-  [s]
-  (if (string? s)
-    (subs s 0 (dec (count s)))
-    s))
-
-(def iri-part-weights
+(def ^:private iri-part-weights
   "Pairs of function and weight to compute similarity of IRIs."
   [[#(.getDomain %) 0.68]
    [(comp str #(.getPort %)) 0.01]
@@ -45,13 +25,69 @@
    [#(.getQuery %) 0.02]
    [#(.getScheme %) 0.13]])
 
-(defn average
+; ----- Private functions -----
+
+(defn- average
   "Compute average of numbers in collection `coll`."
   [^ISeq coll]
   (if (seq coll)
     (/ (apply + coll)
        (count coll))
     0))
+
+(defn- merge-matching
+  "Merge values of matching keys in maps `a` and `b` into a sequence of vectors."
+  [^IMap a
+   ^IMap b]
+  (for [[k v] a
+        :let [e (find b k)]
+        :when e]
+    [v (val e)]))
+
+(defn- normalized-bounded-difference
+  "Computes similarity via difference between `a` and `b` normalized by `maximum`."
+  [a b & {:keys [maximum]
+          :or {maximum 10000}}]
+  (min (- 1 (/ (js/Math.abs (- a b))
+               maximum)) ; Hard-coded maximum value spread
+       1)) ; Maximum bound is necessary because of the hard-coded maximum that may be surpassed.
+
+(def ^:private parse-date
+  (partial parse (:date formatters)))
+
+(def ^:private parse-date-time
+  (partial parse (:date-time formatters)))
+
+(defn- remove-id
+  "Remove @id from `resource`."
+  [resource]
+  (dissoc resource "@id"))
+
+(defn- trim-last-char
+  "Trim last character in string `s`."
+  [s]
+  (if (string? s)
+    (subs s 0 (dec (count s)))
+    s))
+
+(defn- wrap-literals
+  "Wrap plain literals in @value."
+  [resource]
+  (into {}
+        (for [[k v] resource]
+          [k
+           (if (vector? v)
+             (mapv wrap-literal v)
+             (wrap-literal v))])))
+
+(defn- wrap-type
+  "Wrap @type in `resource`."
+  [resource]
+  (if (contains? resource "@type")
+    (update-in resource ["@type"] (fn [v] {"@id" v}))
+    resource))
+
+; ----- Public functions -----
 
 (defn duration->period
   "Parse xsd:duration `duration` to cljs-time.core/Period."
@@ -73,40 +109,8 @@
   [^String duration]
   (let [change-fn (if (= (first duration) "-") minus plus)]
     (change-fn fixed-date (duration->period duration))))
-    
-(defn merge-matching
-  "Merge values of matching keys in maps `a` and `b` into a sequence of vectors."
-  [^IMap a
-   ^IMap b]
-  (for [[k v] a
-        :let [e (find b k)]
-        :when e]
-    [v (val e)]))
 
-(defn normalized-bounded-difference
-  "Computes similarity via difference between `a` and `b` normalized by `maximum`."
-  [a b & {:keys [maximum]
-          :or {maximum 10000}}]
-  (min (- 1 (/ (js/Math.abs (- a b))
-               maximum)) ; Hard-coded maximum value spread
-       1)) ; Maximum bound is necessary because of the hard-coded maximum that may be surpassed.
-
-(defn- wrap-literals
-  "Wrap plain literals in @value."
-  [resource]
-  (into {}
-        (for [[k v] resource]
-          [k
-           (if (vector? v)
-             (mapv wrap-literal v)
-             (wrap-literal v))])))
-
-(defn- wrap-type
-  "Wrap @type in `resource`."
-  [resource]
-  (if (contains? resource "@type")
-    (update-in resource ["@type"] (fn [v] {"@id" v}))
-    resource))
+; ---- Multimethods -----
 
 (defmulti compute-similarity
   "Compute similarity of resources `a` and `b`. Dispatches on the lowest common ancestor
