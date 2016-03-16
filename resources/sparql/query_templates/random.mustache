@@ -1,0 +1,71 @@
+{{!
+@param IRI   graph-iri
+@param Array path
+@param Array vars
+@param int   limit
+}}
+
+PREFIX :     <https://w3id.org/lodsight/rdf-path#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+CONSTRUCT {
+  [] a :Path ;
+    :edges (
+      {{#path}}
+        [
+          a :Edge ;
+          :start ?{{start.varname}} ;
+          :edgeProperty <{{{edgeProperty}}}> ;
+          :end ?{{end.varname}}
+        ]
+      {{/path}}
+    ) .
+  {{#vars}}
+  {{^datatype}} 
+  ?{{varname}} rdfs:label ?{{varname}}o .
+  {{/datatype}}
+  {{/vars}}
+}
+WHERE {
+  {
+    SELECT DISTINCT {{#vars}} ?{{varname}} {{/vars}}
+    WHERE {
+      {{#graph-iri}}
+      GRAPH <{{{graph-iri}}}> {
+      {{/graph-iri}}
+        {{#path}}
+          {{#start.first}}
+          ?{{start.varname}} a <{{{start.type}}}> . 
+          {{/start.first}}
+          
+          ?{{start.varname}} <{{{edgeProperty}}}> ?{{end.varname}} .
+
+          {{#end.datatype}}
+          FILTER sameTerm(DATATYPE(?{{end.varname}}), <{{{end.type}}}>)
+          {{/end.datatype}}
+
+          {{^end.datatype}}
+          ?{{end.varname}} a <{{{end.type}}}> .
+          {{/end.datatype}}
+        {{/path}}
+      {{#graph-iri}}
+      }
+      {{/graph-iri}}
+    }
+    ORDER BY RAND()
+    LIMIT {{limit}}
+  }
+  {{#vars}}
+  {{^datatype}} {{! No OPTIONAL is needed for datatype vars. }}
+  OPTIONAL {
+    {{#graph-iri}}
+    GRAPH <{{{graph-iri}}}> {
+    {{/graph-iri}}
+      ?{{varname}} rdfs:label ?{{varname}}o .
+    {{#graph-iri}}
+    }
+    {{/graph-iri}}
+  }
+  {{/datatype}}
+  {{/vars}}
+}

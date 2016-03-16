@@ -1,0 +1,17 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rpath: <https://w3id.org/lodsight/rdf-path#>
+
+SELECT ?start ?edgeProperty ?end ?isEndDatatype
+WHERE {
+  VALUES (?endType ?isEndDatatype) {
+    (rdfs:Class false)
+    (rdfs:Datatype true)
+  }
+  [] a rpath:Path ;
+    rpath:edges/rdf:rest*/rdf:first ?edge .
+  ?edge rpath:start/rdf:type ?start ;
+    rpath:edgeProperty ?edgeProperty ;
+    rpath:end/rdf:type ?end .
+  ?end a ?endType .
+}

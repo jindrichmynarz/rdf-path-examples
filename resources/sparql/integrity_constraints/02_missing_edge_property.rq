@@ -1,0 +1,22 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rpath: <https://w3id.org/lodsight/rdf-path#>
+PREFIX spin:  <http://spinrdf.org/spin#>
+
+CONSTRUCT {
+  [] a spin:ConstraintViolation ;
+    spin:violationRoot ?edge ;
+    spin:violationPath ?edgeProperty ;
+    rdfs:label "Each rpath:Edge must have rpath:start, rpath:edgeProperty, and rpath:end."@en .
+}
+WHERE {
+  VALUES ?edgeProperty {
+    rpath:start
+    rpath:edgeProperty
+    rpath:end
+  }
+  [] rpath:edges/rdf:rest*/rdf:first ?edge .
+  FILTER NOT EXISTS {
+    ?edge ?edgeProperty [] .
+  }
+}

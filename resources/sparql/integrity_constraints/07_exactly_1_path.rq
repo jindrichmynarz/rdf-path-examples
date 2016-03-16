@@ -1,0 +1,17 @@
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rpath: <https://w3id.org/lodsight/rdf-path#>
+PREFIX spin:  <http://spinrdf.org/spin#>
+
+CONSTRUCT {
+  [] a spin:ConstraintViolation ;
+    rdfs:label "More than 1 RDF path cannot be provided."@en .
+}
+WHERE {
+  {
+    SELECT (COUNT(DISTINCT ?path) AS ?pathCount)
+    WHERE {
+      ?path a rpath:Path .
+    }
+  }
+  FILTER (?pathCount != 1)
+}

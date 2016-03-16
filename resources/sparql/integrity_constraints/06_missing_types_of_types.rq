@@ -1,0 +1,27 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rpath: <https://w3id.org/lodsight/rdf-path#>
+PREFIX spin:  <http://spinrdf.org/spin#>
+
+CONSTRUCT {
+  [] a spin:ConstraintViolation ;
+    spin:violationRoot ?type ;
+    spin:violationPath rdf:type ;
+    rdfs:label "Each type of start or end must be either rdfs:Class or rdfs:Datatype."@en .
+}
+WHERE {
+  VALUES ?property {
+    rpath:start
+    rpath:end
+  }
+  [] rpath:edges/rdf:rest*/rdf:first [
+    ?property [ a ?type ]
+  ] .
+  FILTER NOT EXISTS {
+    VALUES ?typeType {
+      rdfs:Class
+      rdfs:Datatype
+    }
+    ?type a ?typeType .
+  }
+}

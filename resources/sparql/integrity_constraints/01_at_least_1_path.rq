@@ -1,0 +1,13 @@
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rpath: <https://w3id.org/lodsight/rdf-path#>
+PREFIX spin:  <http://spinrdf.org/spin#>
+
+CONSTRUCT {
+  [] a spin:ConstraintViolation ;
+    rdfs:label "At least 1 rpath:Path must be present."@en .
+}
+WHERE {
+  FILTER NOT EXISTS {
+    [] a rpath:Path .
+  }
+}
