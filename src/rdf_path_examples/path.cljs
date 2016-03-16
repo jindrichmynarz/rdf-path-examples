@@ -7,7 +7,7 @@
             [rdf-path-examples.util :refer [find-by-id log render-template resolve-resource]]
             [rdf-path-examples.similarity :refer [get-path-similarity]]
             [rdf-path-examples.diversity :refer [greedy-construction]]
-            [rdf-path-examples.type-inference :refer [is-ordinal?]]
+            [rdf-path-examples.type-inference :refer [infer-type is-ordinal?]]
             [schema.core :as s]
             [clojure.set :refer [union]]
             [cljs.core.async :refer [<!]])
@@ -110,8 +110,8 @@
 (defn zip-paths
   "Create a transducer that zips edge properties from `formatted-path` with edge nodes."
   [formatted-path]
-  (let [edge-properties (map :edgeProperty (:path formatted-path))]
-    (map (fn [[id objects]] [id (map vector edge-properties objects)]))))
+  (let [end-property (last (mapv :edgeProperty (:path formatted-path)))]
+    (map (fn [[id objects]] [id (map vector end-property objects)]))))
 
 (defn extract-edges
   "Builds a transducer that extracts edges of a path, provided the `resolve-fn` function
@@ -123,13 +123,6 @@
                             (comp (juxt #(get % "start") #(get % "end"))
                                   resolve-fn))
                    #(get % "edges")))))
-
-(defn extract-ordinal-properties
-  "Extracts ordinal properties out of `path-data`."
-  [path-data]
-  (comp (filter (comp (partial = "Edge") #(get % "@type")))
-        (map (juxt #(get % "edgeProperty") #(get % "end")))
-        (filter (comp is-ordinal? second))))
 
 (defn get-path-data
   "Get path data in JSON-LD formatted as a Clojure data structure."
@@ -158,11 +151,7 @@
                            jsonld/rdf->jsonld
                            <!)]
           (when-not (empty? response)
-            (-> response
-                (jsonld/compact-jsonld #js {}) ; Compact with empty context to coerce compact representation.
-                <!
-                js->clj
-                (get "@graph")))))))
+            (js->clj response))))))
 
 (defn get-property-ranges
   [{:keys [graph-iri sparql-endpoint]}
@@ -210,20 +199,21 @@
    callback]
   {:pre [(s/validate Config config)]}
   (go (let [formatted-path (<! (preprocess-path path))
-            edge-properties (map :edgeProperty (:path formatted-path))
+            edge-properties (mapv :edgeProperty (:path formatted-path))
             path-data (<! (get-path-data (assoc config :limit limit) formatted-path))]
         (if path-data
           (let [find-path-data (partial resolve-resource path-data)
-                path-map (into {} (comp filter-paths
-                                        (extract-edges find-path-data)
-                                        (zip-paths formatted-path))
-                               path-data)
-                ;_ (log (mapcat second path-map))
+                path-map (into {} (comp filter-paths (extract-edges find-path-data)) path-data)
                 paths (set (keys path-map))
-                path-nodes (remove nil? (mapcat (comp (partial map (comp #(get % "@id") second)) second)
-                                                path-map))
+                path-nodes (remove nil? (mapcat (comp (partial map (comp #(get % "@id"))) second) path-map))
                 source-data (<! (get-source-data config path-nodes))
-                ;_ (log (decompose-map source-data))
+                end-property (peek edge-properties)
+                ordinal-values (filter (comp is-ordinal? infer-type second)
+                                       (concat (map (comp (partial vector end-property) last second) path-map) 
+                                               (sequence (comp (mapcat decompose-map)
+                                                               (filter (comp (partial not= \@) ffirst)))
+                                                         source-data)))
+                _ (log (group-by first ordinal-values))
                 find-source-data (partial resolve-resource source-data)
                 ; Similarities are indexed by sets of the compared paths' IDs.
                 path-similarities (into {} (map (juxt (comp set keys)
