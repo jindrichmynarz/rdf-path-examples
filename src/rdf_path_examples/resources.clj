@@ -8,7 +8,8 @@
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
             [liberator.core :refer [defresource]]
-            [liberator.representation :refer [render-map-generic]]))
+            [liberator.representation :refer [render-map-generic]])
+  (:import [org.apache.jena.sparql.engine.http QueryExceptionHTTP]))
 
 (def ^:private default-response
   {:representation {:media-type "application/ld+json"}})
@@ -24,6 +25,12 @@
 (defresource rdf-path-examples
   :allowed-methods [:post]
   :available-media-types ["application/ld+json"]
+  :handle-exception (fn [{:keys [exception]}]
+                      (try
+                        (throw exception)
+                        (catch QueryExceptionHTTP e
+                          (views/error {:status 500
+                                        :error-msg (.getMessage e)}))))
   :handle-malformed views/error
   :handle-ok (fn [{{configuration :params} :request
                    :keys [rdf-path]}]

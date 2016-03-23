@@ -1,5 +1,6 @@
 (ns rdf-path-examples.examples
   (:require [rdf-path-examples.sparql :refer [construct-query select-query]]
+            [rdf-path-examples.views :as views]
             [stencil.core :refer [render-file]]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
@@ -44,8 +45,7 @@
                                   :graph-iri graph-iri
                                   :limit limit))
         results (construct-query sparql-endpoint query)]
-    (log/info (model->ttl results))
-    ))
+    (log/info (model->ttl results))))
 
 (defmethod generate-examples "distinct"
   [{:keys [graph-iri limit sparql-endpoint]}
