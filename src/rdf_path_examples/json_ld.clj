@@ -1,4 +1,4 @@
-(ns rdf-path-examples.jsonld
+(ns rdf-path-examples.json-ld
   (:import [java.io InputStream]
            [java.util LinkedHashMap]
            [com.github.jsonldjava.core JsonLdOptions JsonLdProcessor]

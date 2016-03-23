@@ -1,11 +1,11 @@
 (ns rdf-path-examples.examples
   (:require [rdf-path-examples.sparql :refer [construct-query select-query]]
-            [rdf-path-examples.views :as views]
+            [rdf-path-examples.json-ld :refer [compact-json-ld]]
             [stencil.core :refer [render-file]]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [clojure.set :refer [union]]
-            [yesparql.sparql :refer [model->ttl]])
+            [yesparql.sparql :refer [model->json-ld]])
   (:import [org.apache.jena.rdf.model Model]))
 
 (defn extract-vars
@@ -45,7 +45,7 @@
                                   :graph-iri graph-iri
                                   :limit limit))
         results (construct-query sparql-endpoint query)]
-    (log/info (model->ttl results))))
+    (model->json-ld results)))
 
 (defmethod generate-examples "distinct"
   [{:keys [graph-iri limit sparql-endpoint]}
