@@ -8,6 +8,11 @@
 
 (def valid-path (json-ld->rdf-model (io/input-stream (io/resource "valid_path.jsonld"))))
 
+(def configuration
+  {:limit 5
+   :selection-method "random"
+   :sparql-endpoint "http://lod2-dev.vse.cz:8890/sparql"})
+
 (deftest preprocess-path
   (let [preprocessed-path (examples/preprocess-path valid-path)]
     (is (= preprocessed-path {:path [{:start {:first true
@@ -22,12 +27,8 @@
                                       :varname "e1"}]})
         "Preprocessing works as expected.")))
 
-(deftest generate-examples
-  (let [configuration {:limit 5
-                       :selection-method "random"
-                       :sparql-endpoint "http://lod2-dev.vse.cz:8890/sparql"}]
-    (testing "Random selection generates syntatically valid SPARQL query."
-      (is (QueryFactory/create (render-file "sparql/query_templates/random.mustache"
-                                            (assoc (examples/preprocess-path valid-path)
-                                                   :limit (:limit configuration))))))
-    (examples/generate-examples configuration valid-path)))
+(deftest random-selection
+  (testing "Random selection generates syntatically valid SPARQL query."
+    (is (QueryFactory/create (render-file "sparql/query_templates/random.mustache"
+                                          (assoc (examples/preprocess-path valid-path)
+                                                 :limit (:limit configuration)))))))
