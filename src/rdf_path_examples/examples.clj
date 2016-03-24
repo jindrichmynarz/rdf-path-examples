@@ -44,7 +44,7 @@
   (if (.isEmpty examples)
     {}
     (-> examples
-        model->jsonld
+        model->json-ld
         JsonUtils/fromString
         (json-ld/compact example-context)
         hash-map)))
