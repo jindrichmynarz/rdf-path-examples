@@ -1,6 +1,6 @@
 (ns rdf-path-examples.examples-test
   (:require [rdf-path-examples.examples :as examples]
-            [rdf-path-examples.jsonld :refer [json-ld->rdf-model]]
+            [rdf-path-examples.json-ld :refer [json-ld->rdf-model]]
             [stencil.core :refer [render-file]]
             [clojure.test :refer :all]
             [clojure.java.io :as io])
