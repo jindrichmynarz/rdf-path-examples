@@ -7,8 +7,7 @@
             [schema.coerce :as coerce]
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
-            [liberator.core :refer [defresource]]
-            [liberator.representation :refer [render-map-generic]])
+            [liberator.core :refer [defresource]])
   (:import [org.apache.jena.sparql.engine.http QueryExceptionHTTP]))
 
 (def ^:private default-response
@@ -16,11 +15,6 @@
 
 (def parse-query-params
   (coerce/coercer Config coerce/string-coercion-matcher))
-
-(defmethod render-map-generic "application/ld+json"
-  ; Alias the JSON rendering function for JSON-LD
-  [data context]
-  ((get-method render-map-generic "application/json") data context))
 
 (defresource rdf-path-examples
   :allowed-methods [:post]
