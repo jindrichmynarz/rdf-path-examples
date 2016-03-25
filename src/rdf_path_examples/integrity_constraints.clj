@@ -2,7 +2,8 @@
   (:require [rdf-path-examples.sparql :refer [construct-query]]
             [clojure.java.io :as io]
             [yesparql.sparql :refer [model->json-ld]])
-  (:import [org.apache.jena.rdf.model Model]))
+  (:import [org.apache.jena.rdf.model Model]
+           [com.github.jsonldjava.utils JsonUtils]))
 
 (defonce integrity-constraints
   (->> "sparql/integrity_constraints"
@@ -28,8 +29,8 @@
 
 (defn validate-path
   "Validate RDF `path`.
-  Returns nil if path is valid. Otherwise, return JSON-LD string containing validation errors."
+  Returns nil if path is valid. Otherwise, returns JSON-LD hash-map containing validation errors."
   [^Model path]
   (let [validation-results (execute-validation path)]
     (when-not (valid-path? validation-results)
-      (model->json-ld validation-results))))
+      (into {} (JsonUtils/fromString (model->json-ld validation-results))))))
