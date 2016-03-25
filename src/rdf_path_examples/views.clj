@@ -8,8 +8,13 @@
 
 (defn error
   "Render JSON-LD description of the error."
-  [{:keys [error-msg status]}]
-  {"@context" "http://www.w3.org/ns/hydra/context.jsonld"
-   "@type" "Error"
-   "statusCode" status
-   "description" error-msg})
+  [{:keys [error-msg status see-also]}]
+  (let [hydra-error (cond-> {"@type" "Error"
+                             "statusCode" status
+                             "description" error-msg}
+                      see-also
+                      (assoc "rdfs:seeAlso" see-also))
+        graph (cond-> [hydra-error] see-also (conj see-also))]
+    {"@context" {"@vocab" "http://www.w3.org/ns/hydra/core#"
+                 "rdfs" "http://www.w3.org/2000/01/rdf-schema#"}
+     "@graph" graph}))
