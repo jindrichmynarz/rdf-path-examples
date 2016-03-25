@@ -43,11 +43,10 @@
   [^Model examples]
   (if (.isEmpty examples)
     {}
-    (-> examples
-        model->json-ld
-        JsonUtils/fromString
-        (json-ld/compact example-context)
-        hash-map)))
+    (into {} (-> examples
+                 model->json-ld
+                 JsonUtils/fromString
+                 (json-ld/compact example-context)))))
 
 (defmulti generate-examples
   "Generate examples of RDF paths using the chosen selection method."
