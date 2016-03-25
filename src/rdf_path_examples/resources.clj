@@ -8,7 +8,8 @@
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
             [liberator.core :refer [defresource]])
-  (:import [org.apache.jena.sparql.engine.http QueryExceptionHTTP]))
+  (:import [org.apache.jena.sparql.engine.http QueryExceptionHTTP]
+           [schema.utils ErrorContainer]))
 
 (def ^:private default-response
   {:representation {:media-type "application/ld+json"}})
@@ -25,7 +26,14 @@
                         (catch QueryExceptionHTTP e
                           (views/error {:status 500
                                         :error-msg (.getMessage e)}))))
-  :handle-malformed views/error
+  :handle-malformed (fn [{:keys [malformed-error]
+                          :as ctx}]
+                      (cond (string? malformed-error)
+                              (views/error (assoc ctx :error-msg malformed-error))
+                            (map? malformed-error)
+                              (views/error (assoc ctx
+                                                  :error-msg "Integrity constraint violation"
+                                                  :see-also malformed-error))))
   :handle-ok (fn [{{configuration :params} :request
                    :keys [rdf-path]}]
                (generate-examples configuration rdf-path))
@@ -35,7 +43,10 @@
                 (let [configuration (parse-query-params query-params)
                       path (json-ld/json-ld->rdf-model body)]
                   (if-let [error (or (:error configuration) (validate-path path))]
-                    [true (assoc default-response :error-msg error)]
+                    [true (assoc default-response
+                                 :malformed-error (if (instance? ErrorContainer configuration)
+                                                    (str error)
+                                                    error))]
                     [false {:request {:params (merge {:limit 5} (keywordize-keys configuration))}
                             :rdf-path path}])))
   :new? (constantly false)
