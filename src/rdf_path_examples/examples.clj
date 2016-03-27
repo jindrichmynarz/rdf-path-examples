@@ -7,6 +7,7 @@
             [clojure.set :refer [union]]
             [yesparql.sparql :refer [model->json-ld]])
   (:import [org.apache.jena.rdf.model Model]
+           [org.apache.jena.query Dataset]
            [com.github.jsonldjava.utils JsonUtils]))
 
 (defonce example-context
@@ -23,7 +24,7 @@
 
 (defn preprocess-path
   "Preprocess `path` for templating with Mustache."
-  [^Model path]
+  [^Dataset path]
   (let [query (slurp (io/resource "sparql/extract_path.rq"))
         results (select-query path query)
         path (map-indexed (fn [index {:keys [start edgeProperty end isEndDatatype]}]
@@ -54,7 +55,7 @@
 
 (defmethod generate-examples "random"
   [{:keys [graph-iri limit sparql-endpoint]}
-   ^Model path]
+   ^Dataset path]
   (let [path-data (preprocess-path path)
         query (render-file "sparql/query_templates/random.mustache"
                            (assoc path-data
@@ -65,8 +66,8 @@
 
 (defmethod generate-examples "distinct"
   [{:keys [graph-iri limit sparql-endpoint]}
-   ^Model path])
+   ^Dataset path])
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sparql-endpoint]}
-   ^Model path])
+   ^Dataset path])

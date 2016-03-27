@@ -1,6 +1,8 @@
 (ns rdf-path-examples.sparql
-  (:import [org.apache.jena.rdf.model Literal Model Resource]
-           [org.apache.jena.query QueryExecutionFactory QueryFactory]))
+  (:require [clojure.tools.logging :as log])
+  (:import [org.apache.jena.rdf.model Literal Resource]
+           [org.apache.jena.query QueryExecutionFactory QueryFactory]
+           [org.apache.jena.query Dataset]))
 
 ; ----- Protocols -----
 
@@ -29,15 +31,22 @@
  
 ; ----- Public functions -----
 
+(defn ^Boolean ask-query
+  "Execute SPARQL ASK `query` on RDF `dataset`."
+  [^Dataset dataset
+   ^String query]
+  (with-open [qexec (QueryExecutionFactory/create query dataset)]
+    (.execAsk qexec)))
+
 (defmulti construct-query
   "Execute SPARQL CONSTRUCT `query` on `datasource`."
   (fn [datasource query] (type datasource)))
 
-(defmethod ^Model construct-query Model
-  ; Execute SPARQL CONSTRUCT `query` on local RDF model `model`.
-  [^Model model
+(defmethod ^Model construct-query Dataset
+  ; Execute SPARQL CONSTRUCT `query` on local RDF `dataset`.
+  [^Dataset dataset
    ^String query]
-  (with-open [qexec (QueryExecutionFactory/create query model)]
+  (with-open [qexec (QueryExecutionFactory/create query dataset)]
     (.execConstruct qexec)))
 
 (defmethod ^Model construct-query String
@@ -51,11 +60,11 @@
   "Execute SPARQL SELECT `query` on `datasource`." 
   (fn [datasource query] (type datasource)))
 
-(defmethod select-query Model
-  ; Execute SPARQL SELECT `query` on local RDF model `model`.
-  [^Model model
+(defmethod select-query Dataset
+  ; Execute SPARQL SELECT `query` on local RDF `dataset`.
+  [^Dataset dataset
    ^String query]
-  (with-open [qexec (QueryExecutionFactory/create query model)]
+  (with-open [qexec (QueryExecutionFactory/create query dataset)]
     (let [results (.execSelect qexec)
           result-vars (.getResultVars results)]
       (mapv (partial process-select-solution result-vars)

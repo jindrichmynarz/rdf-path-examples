@@ -1,12 +1,12 @@
 (ns rdf-path-examples.examples-test
   (:require [rdf-path-examples.examples :as examples]
-            [rdf-path-examples.json-ld :refer [json-ld->rdf-model]]
+            [rdf-path-examples.json-ld :refer [json-ld->rdf-dataset]]
             [stencil.core :refer [render-file]]
             [clojure.test :refer :all]
             [clojure.java.io :as io])
   (:import [org.apache.jena.query QueryFactory QueryParseException]))
 
-(def valid-path (json-ld->rdf-model (io/input-stream (io/resource "valid_path.jsonld"))))
+(def valid-path (json-ld->rdf-dataset (io/input-stream (io/resource "valid_path.jsonld"))))
 
 (def configuration
   {:limit 5
