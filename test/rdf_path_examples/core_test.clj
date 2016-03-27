@@ -37,7 +37,8 @@
         has-constraint-violation? (comp #(ask-query % has-constraint-violation-query)
                                         json-ld->rdf-model
                                         #(ByteArrayInputStream. (.getBytes %))
-                                        :body)]
+                                        :body)
+        response-for-path (comp app (partial generate-examples :body) resource->string)]
     (testing "Requests are sent using HTTP POST"
       (is (= (status-code (generate-examples :method :get)) 405)))
     (testing "Other input MIME types than JSON-LD are not supported"
@@ -52,16 +53,26 @@
       (is (is-400? (generate-examples :params {:selection-method "invalid"}))
           "selection-method must be supported."))
     (testing "RDF path must not be empty"
-      (let [response (app (generate-examples :body (resource->string "no_path.jsonld")))]
-        (is (= (-> response :status) 400))
+      (let [response (response-for-path "no_path.jsonld")]
+        (is (= (:status response) 400))
         (is (has-constraint-violation? response))))
-    (is (is-400? (generate-examples :body (resource->string "missing_edge_property.jsonld")))
-        "Edges of RDF path must have rpath:start, rpath:edgeProperty, and rpath:end.")
-    (is (is-400? (generate-examples :body (resource->string "discontinuous_path.jsonld")))
-        "Paths must be continuous.")
-    (is (is-400? (generate-examples :body (resource->string "start_datatype.jsonld")))
-        "Only edge ends can be datatypes.")
-    (is (is-400? (generate-examples :body (resource->string "missing_type.jsonld")))
-        "Edge starts and ends must have a type.")
-    (is (is-400? (generate-examples :body (resource->string "more_than_1_path.jsonld")))
-        "Only 1 RDF path may be provided.")))
+    (testing "Edges of RDF path must have rpath:start, rpath:edgeProperty, and rpath:end."
+      (let [response (response-for-path "missing_edge_property.jsonld")]
+        (is (= (:status response) 400))
+        (is (has-constraint-violation? response))))
+    (testing "Paths must be continuous."
+      (let [response (response-for-path "discontinuous_path.jsonld")]
+        (is (= (:status response) 400))
+        (is (has-constraint-violation? response))))
+    (testing "Only edge ends can be datatypes."
+      (let [response (response-for-path "start_datatype.jsonld")]
+        (is (= (:status response) 400))
+        (is (has-constraint-violation? response))))
+    (testing "Edge starts and ends must have a type."
+      (let [response (response-for-path "missing_type.jsonld")]
+        (is (= (:status response) 400))
+        (is (has-constraint-violation? response))))
+    (testing "Only 1 RDF path may be provided."
+      (let [response (response-for-path "more_than_1_path.jsonld")]
+        (is (= (:status response) 400))
+        (is (has-constraint-violation? response))))))
