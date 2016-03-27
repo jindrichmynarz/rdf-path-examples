@@ -1,0 +1,5 @@
+PREFIX spin: <http://spinrdf.org/spin#>
+
+ASK {
+  [] a spin:ConstraintViolation .
+}

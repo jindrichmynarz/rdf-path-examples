@@ -2,8 +2,11 @@
   (:require [rdf-path-examples.core :refer [app]]
             [rdf-path-examples.examples :as examples]
             [rdf-path-examples.util :refer [resource->string]]
+            [rdf-path-examples.sparql :refer [ask-query]]
+            [rdf-path-examples.json-ld :refer [json-ld->rdf-dataset]]
             [clojure.test :refer :all]
-            [ring.mock.request :as mock]))
+            [ring.mock.request :as mock])
+  (:import [java.io ByteArrayInputStream]))
 
 (def jsonld "application/ld+json")
 
@@ -29,7 +32,14 @@
                                 (mock/header "Accept" accept)
                                 (mock/query-string (merge valid-params params))
                                 (mock/body body)))
-        is-400? (comp (partial = 400) status-code)]
+        has-constraint-violation-query (resource->string "has_constraint_violation.rq")
+        is-400? (comp (partial = 400) status-code)
+        has-constraint-violation? (comp #(ask-query % has-constraint-violation-query)
+                                        json-ld->rdf-dataset
+                                        #(ByteArrayInputStream. (.getBytes %))
+                                        :body
+                                        app
+                                        generate-examples)]
     (testing "Requests are sent using HTTP POST"
       (is (= (status-code (generate-examples :method :get)) 405)))
     (testing "Other input MIME types than JSON-LD are not supported"
@@ -43,16 +53,17 @@
           "sparql-endpoint must be a valid HTTP IRI.")
       (is (is-400? (generate-examples :params {:selection-method "invalid"}))
           "selection-method must be supported."))
-    (testing "RDF path is well-formed"
-      (is (is-400? (generate-examples :body (resource->string "no_path.jsonld")))
-          "RDF path must not be empty.")
-      (is (is-400? (generate-examples :body (resource->string "missing_edge_property.jsonld")))
-          "Edges of RDF path must have rpath:start, rpath:edgeProperty, and rpath:end.")
-      (is (is-400? (generate-examples :body (resource->string "discontinuous_path.jsonld")))
-          "Paths must be continuous.")
-      (is (is-400? (generate-examples :body (resource->string "start_datatype.jsonld")))
-          "Only edge ends can be datatypes.")
-      (is (is-400? (generate-examples :body (resource->string "missing_type.jsonld")))
-          "Edge starts and ends must have a type.")
-      (is (is-400? (generate-examples :body (resource->string "more_than_1_path.jsonld")))
-          "Only 1 RDF path may be provided."))))
+    (testing "RDF path must not be empty"
+      (let [body (resource->string "no_path.jsonld")]
+        (is (is-400? (generate-examples :body body)))
+        (is (has-constraint-violation? :body body))))
+    (is (is-400? (generate-examples :body (resource->string "missing_edge_property.jsonld")))
+        "Edges of RDF path must have rpath:start, rpath:edgeProperty, and rpath:end.")
+    (is (is-400? (generate-examples :body (resource->string "discontinuous_path.jsonld")))
+        "Paths must be continuous.")
+    (is (is-400? (generate-examples :body (resource->string "start_datatype.jsonld")))
+        "Only edge ends can be datatypes.")
+    (is (is-400? (generate-examples :body (resource->string "missing_type.jsonld")))
+        "Edge starts and ends must have a type.")
+    (is (is-400? (generate-examples :body (resource->string "more_than_1_path.jsonld")))
+        "Only 1 RDF path may be provided.")))
