@@ -18,7 +18,7 @@
 
 (defn- ^Model execute-validation
   "Execute validation of integrity constraints of RDF `path`."
-  [^Dataset path]
+  [^Model path]
   (->> integrity-constraints
        (map (partial construct-query path))
        (reduce (fn [m1 m2] (.union m1 m2)))))
@@ -30,8 +30,8 @@
 
 (defn validate-path
   "Validate RDF `path`.
-  Returns nil if path is valid. Otherwise, returns JSON-LD hash-map containing validation errors."
-  [^Dataset path]
+  Returns nil if path is valid. Otherwise, returns RDF model containing validation errors."
+  [^Model path]
   (let [validation-results (execute-validation path)]
     (when-not (valid-path? validation-results)
-      (into {} (JsonUtils/fromString (model->json-ld validation-results))))))
+      validation-results)))

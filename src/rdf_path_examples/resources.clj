@@ -9,6 +9,7 @@
             [clojure.walk :refer [keywordize-keys]]
             [liberator.core :refer [defresource]])
   (:import [org.apache.jena.sparql.engine.http QueryExceptionHTTP]
+           [org.apache.jena.rdf.model Model]
            [schema.utils ErrorContainer]))
 
 (def ^:private default-response
@@ -30,7 +31,7 @@
                           :as ctx}]
                       (cond (string? malformed-error)
                               (views/error (assoc ctx :error-msg malformed-error))
-                            (map? malformed-error)
+                            (instance? Model malformed-error)
                               (views/error (assoc ctx
                                                   :error-msg "Integrity constraint violation"
                                                   :see-also malformed-error))))
@@ -41,7 +42,7 @@
                          (= content-type "application/ld+json"))
   :malformed? (fn [{{:keys [body query-params]} :request}]
                 (let [configuration (parse-query-params query-params)
-                      path (json-ld/json-ld->rdf-dataset body)]
+                      path (json-ld/json-ld->rdf-model body)]
                   (if-let [error (or (:error configuration) (validate-path path))]
                     [true (assoc default-response
                                  :malformed-error (if (instance? ErrorContainer configuration)

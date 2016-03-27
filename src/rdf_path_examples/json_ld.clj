@@ -4,19 +4,20 @@
            [java.util LinkedHashMap]
            [com.github.jsonldjava.core JsonLdOptions JsonLdProcessor]
            [com.github.jsonldjava.utils JsonUtils]
-           [org.apache.jena.query Dataset DatasetFactory]
+           [org.apache.jena.query DatasetFactory]
+           [org.apache.jena.rdf.model Model]
            [org.apache.jena.riot Lang RDFDataMgr]))
 
 (defonce ^:private
   json-ld-options
   (doto (JsonLdOptions.) (.setUseNativeTypes true)))
 
-(defn ^Dataset json-ld->rdf-dataset
-  "Convert input stream `json-ld` into Jena Dataset."
+(defn ^Model json-ld->rdf-model
+  "Convert input stream `json-ld` into Jena Model"
   [^InputStream json-ld]
   (let [dataset (DatasetFactory/create)]
     (RDFDataMgr/read dataset json-ld Lang/JSONLD)
-    dataset))
+    (.getDefaultModel dataset)))
 
 (defn compact
   "Compact `json-ld` using `context` with optional `options`"
