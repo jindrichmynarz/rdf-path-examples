@@ -1,0 +1,12 @@
+{{!
+@param int    status
+@param string error-msg
+}}
+
+PREFIX : <http://www.w3.org/ns/hydra/core#>
+
+INSERT DATA {
+  [] a :Error ;
+    :statusCode {{status}} ;
+    :description "{{error-msg}}" .
+}

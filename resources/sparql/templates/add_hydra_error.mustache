@@ -1,0 +1,19 @@
+{{!
+@param int    status
+@param string error-msg
+}}
+
+PREFIX :     <http://www.w3.org/ns/hydra/core#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX spin: <http://spinrdf.org/spin#>
+
+INSERT {
+  ?error a :Error ;
+    :statusCode {{status}} ;
+    :description "{{error-msg}}" ;
+    rdfs:seeAlso ?constraintViolation . 
+}
+WHERE {
+  ?constraintViolation a spin:ConstraintViolation .
+  BIND (BNODE() AS ?error)
+}

@@ -3,7 +3,7 @@
             [rdf-path-examples.examples :as examples]
             [rdf-path-examples.util :refer [resource->string]]
             [rdf-path-examples.sparql :refer [ask-query]]
-            [rdf-path-examples.json-ld :refer [json-ld->rdf-dataset]]
+            [rdf-path-examples.json-ld :refer [json-ld->rdf-model]]
             [clojure.test :refer :all]
             [ring.mock.request :as mock])
   (:import [java.io ByteArrayInputStream]))
@@ -35,11 +35,9 @@
         has-constraint-violation-query (resource->string "has_constraint_violation.rq")
         is-400? (comp (partial = 400) status-code)
         has-constraint-violation? (comp #(ask-query % has-constraint-violation-query)
-                                        json-ld->rdf-dataset
+                                        json-ld->rdf-model
                                         #(ByteArrayInputStream. (.getBytes %))
-                                        :body
-                                        app
-                                        generate-examples)]
+                                        :body)]
     (testing "Requests are sent using HTTP POST"
       (is (= (status-code (generate-examples :method :get)) 405)))
     (testing "Other input MIME types than JSON-LD are not supported"
@@ -54,9 +52,9 @@
       (is (is-400? (generate-examples :params {:selection-method "invalid"}))
           "selection-method must be supported."))
     (testing "RDF path must not be empty"
-      (let [body (resource->string "no_path.jsonld")]
-        (is (is-400? (generate-examples :body body)))
-        (is (has-constraint-violation? :body body))))
+      (let [response (app (generate-examples :body (resource->string "no_path.jsonld")))]
+        (is (= (-> response :status) 400))
+        (is (has-constraint-violation? response))))
     (is (is-400? (generate-examples :body (resource->string "missing_edge_property.jsonld")))
         "Edges of RDF path must have rpath:start, rpath:edgeProperty, and rpath:end.")
     (is (is-400? (generate-examples :body (resource->string "discontinuous_path.jsonld")))

@@ -29,6 +29,6 @@
 
 (deftest random-selection
   (testing "Random selection generates syntatically valid SPARQL query."
-    (is (QueryFactory/create (render-file "sparql/query_templates/random.mustache"
+    (is (QueryFactory/create (render-file "sparql/templates/random.mustache"
                                           (assoc (examples/preprocess-path valid-path)
                                                  :limit (:limit configuration)))))))
