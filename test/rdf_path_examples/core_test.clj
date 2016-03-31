@@ -8,11 +8,18 @@
             [ring.mock.request :as mock])
   (:import [java.io ByteArrayInputStream]))
 
+(set! *warn-on-reflection* true)
+
 (def jsonld "application/ld+json")
 
 (def status-code (comp :status app))
 
 (def valid-path (resource->string "valid_path.jsonld"))
+
+(defn- string->input-stream
+  "Convert string `s` to InputStream."
+  [^String s]
+  (ByteArrayInputStream. (.getBytes s)))
 
 (deftest ^:integration routes
   (testing "Invalid URLs are not found."
@@ -36,7 +43,7 @@
         is-400? (comp (partial = 400) status-code)
         has-constraint-violation? (comp #(ask-query % has-constraint-violation-query)
                                         json-ld->rdf-model
-                                        #(ByteArrayInputStream. (.getBytes %))
+                                        string->input-stream
                                         :body)
         response-for-path (comp app (partial generate-examples :body) resource->string)]
     (testing "Requests are sent using HTTP POST"
