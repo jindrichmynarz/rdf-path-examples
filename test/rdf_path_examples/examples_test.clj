@@ -11,21 +11,27 @@
 
 (def configuration
   {:limit 5
+   :sampling-factor 20
    :selection-method "random"
    :sparql-endpoint "http://lod2-dev.vse.cz:8890/sparql"})
+
+(defn- valid-sparql-query?
+  "Test if SPARQL `query` is syntactically valid."
+  [^String query]
+  (try (QueryFactory/create query)
+       true
+       (catch QueryParseException e
+         (log/error (.getMessage e))
+         false)))
 
 (defn- valid-template?
   "Test if rendering the template from `template-path` using the default valid configuration
   results in a syntactically valid SPARQL query."
-  [template-path]
+  [^String template-path]
   (let [query (render-file template-path
                            (assoc (examples/preprocess-path valid-path)
                                   :limit (:limit configuration)))]
-    (try (QueryFactory/create query)
-         true
-         (catch QueryParseException e
-           (log/error (.getMessage e))
-           false))))
+    (valid-sparql-query? query)))
 
 (deftest preprocess-path
   (let [preprocessed-path (examples/preprocess-path valid-path)]
