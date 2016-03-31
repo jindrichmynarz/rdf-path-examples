@@ -1,6 +1,7 @@
 (ns rdf-path-examples.examples-test
   (:require [rdf-path-examples.examples :as examples]
             [rdf-path-examples.json-ld :refer [json-ld->rdf-model]]
+            [rdf-path-examples.util :refer [resource->string]]
             [stencil.core :refer [render-file]]
             [clojure.tools.logging :as log]
             [clojure.test :refer :all]
@@ -34,6 +35,8 @@
     (valid-sparql-query? query)))
 
 (deftest preprocess-path
+  (is (valid-sparql-query? (resource->string "sparql/extract_path.rq"))
+      "SPARQL query for extracting paths is syntactically valid.")
   (let [preprocessed-path (examples/preprocess-path valid-path)]
     (is (= preprocessed-path {:path [{:start {:first true
                                               :type "http://purl.org/goodrelations/v1#BusinessEntity"
