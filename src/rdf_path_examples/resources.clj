@@ -15,6 +15,10 @@
 (def ^:private default-response
   {:representation {:media-type "application/ld+json"}})
 
+(def ^:private default-params
+  {:limit 5
+   :sampling-factor 20})
+
 (def parse-query-params
   (coerce/coercer Config coerce/string-coercion-matcher))
 
@@ -48,7 +52,7 @@
                                  :malformed-error (if (instance? ErrorContainer configuration)
                                                     (str error)
                                                     error))]
-                    [false {:request {:params (merge {:limit 5} (keywordize-keys configuration))}
+                    [false {:request {:params (merge default-params (keywordize-keys configuration))}
                             :rdf-path path}])))
   :new? (constantly false)
   :respond-with-entity? (constantly true))
