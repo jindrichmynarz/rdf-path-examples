@@ -41,13 +41,3 @@
        ::b ::d ::c
        ::a ::non-existent nil
        :referent :referent :referent))
-
-(deftest is-ordinal-test
-  (testing "Ordinal data types"
-    (are [data-type] (infer/is-ordinal? data-type)
-         ::xsd/decimal
-         ::xsd/short))
-  (testing "Not ordinal data types"
-    (are [data-type] (not (infer/is-ordinal? data-type))
-         ::xsd/string
-         ::xsd/ID)))

@@ -75,10 +75,3 @@
                     ac (intersection a-anc b-anc)]
                 (when (seq ac)
                   (apply (partial max-key (comp count ancestors)) ac)))))
-
-(defn is-ordinal?
-  "Test if `data-type` is ordinal; e.g., a number."
-  [data-type]
-  (or (xsd/ordinal-data-types data-type)
-      (some (partial xsd/ordinal-data-types)
-            (map (partial lowest-common-ancestor data-type) xsd/ordinal-data-types))))
