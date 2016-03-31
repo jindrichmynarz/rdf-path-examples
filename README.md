@@ -12,6 +12,7 @@ Configuration is sent using the query string parameters. The parameters must be 
 * `graph-iri`: IRI of the named graph to query. If no value is provided, the default graph is queried.
 * `selection-method`: ID of the chosen method for selecting examples. Supported values are `random` for random     selection, `distinct` for distinct selection, and `representative` for representative selection. This is a         mandatory parameter.
 * `limit`: Positive integer indicating the maximum number of examples requested in the response. The response may  contain fewer examples (even none), if data in the queried SPARQL endpoint cannot satisfy the RDF path in the      request's body. If no value is provided, the default value 5 is used.
+* `sampling-factor`: Positive integer that is used as the multiplier of `limit` when a selection method that uses sampling is chosen. If no value is provided, the default value 20 is used.
 
 ## License
 
