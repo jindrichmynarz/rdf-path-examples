@@ -1,7 +1,6 @@
 (ns rdf-path-examples.type-inference
   (:require [rdf-path-examples.xml-schema :as xsd]
             [rdf-path-examples.prefixes :as prefix]
-            [rdf-path-examples.util :refer [duration-regex]]
             [clojure.set :refer [intersection]]
             [clojure.string :as string])
   (:import [java.net URI URISyntaxException]
@@ -34,7 +33,7 @@
     (condp re-matches literal
       #"^\d{4}-\d{2}-\d{2}$" ::xsd/date
       #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+\-]\d{2}:\d{2}|Z)?$" ::xsd/dateTime
-      duration-regex ::xsd/duration
+      #"^-?P(\d+Y)?(\d+M)?(\d+D)?T?(\d+H)?(\d+M)?(\d+(\.\d+)?S)?$" ::xsd/duration
       ::xsd/string)))
 
 (defprotocol Resource
