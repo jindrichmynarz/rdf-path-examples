@@ -13,9 +13,8 @@
 
 (extend-protocol IStringifiableNode
   Literal
-  (node->clj [node] (.getValue node)))
-
-(extend-protocol IStringifiableNode
+  (node->clj [node] (.getValue node))
+  
   Resource
   (node->clj [node] (str node)))
 
