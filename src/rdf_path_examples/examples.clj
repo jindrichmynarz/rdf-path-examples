@@ -38,6 +38,18 @@
     {:path path
      :vars (extract-vars path)}))
 
+(defn ^Model retrieve-examples
+  "Retrieve examples of `path` using SPARQL query from `query-template-path`."
+  [^Model path
+   ^String query-template-path
+   {:keys [graph-iri limit sparql-endpoint]}]
+  (let [path-data (preprocess-path path)
+        query (render-file query-template-path
+                           (assoc path-data
+                                  :graph-iri graph-iri
+                                  :limit limit))]
+    (construct-query sparql-endpoint query)))
+
 (defn serialize-examples
   "Serialize path `examples` into JSON-LD Clojure hash-map"
   [^Model examples]
@@ -53,25 +65,18 @@
   (fn [config _] (:selection-method config)))
 
 (defmethod generate-examples "random"
-  [{:keys [graph-iri limit sparql-endpoint]}
+  [params
    ^Model path]
-  (let [path-data (preprocess-path path)
-        query (render-file "sparql/templates/random.mustache"
-                           (assoc path-data
-                                  :graph-iri graph-iri
-                                  :limit limit))
-        results (construct-query sparql-endpoint query)]
-    (serialize-examples results)))
+  (serialize-examples (retrieve-examples path "sparql/templates/random.mustache" params)))
 
 (defmethod generate-examples "distinct"
-  [{:keys [graph-iri limit sparql-endpoint]}
+  [{:keys [sampling-factor] :as params}
    ^Model path]
-  (let [path-data (preprocess-path path)
-        query (render-file "sparql/templates/distinct.mustache"
-                           (assoc path-data
-                                  :graph-iri graph-iri
-                                  :limit limit))]))
+  (let [examples (retrieve-examples path
+                                    "sparql/templates/distinct.mustache"
+                                    (update params :limit (partial * sampling-factor)))]
+    ))
 
 (defmethod generate-examples "representative"
-  [{:keys [graph-iri limit sparql-endpoint]}
+  [{:keys [graph-iri limit sampling-factor sparql-endpoint]}
    ^Model path])
