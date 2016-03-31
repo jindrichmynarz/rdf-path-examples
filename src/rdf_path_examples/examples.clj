@@ -1,6 +1,7 @@
 (ns rdf-path-examples.examples
   (:require [rdf-path-examples.sparql :refer [construct-query select-query]]
             [rdf-path-examples.json-ld :as json-ld]
+            [rdf-path-examples.util :refer [resource->string]]
             [stencil.core :refer [render-file]]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
@@ -11,6 +12,12 @@
 
 (defonce example-context
   (json-ld/load-context "example.jsonld"))
+
+(defonce extract-path-query
+  (resource->string "sparql/extract_path.rq"))
+
+(defonce extract-path-nodes-query
+  (resource->string "sparql/extract_path_nodes.rq"))
 
 (defn extract-vars
   "Extract variable names from `preprocessed-path`."
@@ -24,8 +31,7 @@
 (defn preprocess-path
   "Preprocess `path` for templating with Mustache."
   [^Model path]
-  (let [query (slurp (io/resource "sparql/extract_path.rq"))
-        results (select-query path query)
+  (let [results (select-query path extract-path-query)
         path (map-indexed (fn [index {:keys [start edgeProperty end isEndDatatype]}]
                             {:start {:first (zero? index) 
                                      :type start
@@ -49,6 +55,11 @@
                                   :graph-iri graph-iri
                                   :limit limit))]
     (construct-query sparql-endpoint query)))
+
+(defn extract-path-nodes
+  "Extract path nodes from `examples`."
+  [^Model examples]
+  (map :node (select-query examples extract-path-nodes-query)))
 
 (defn serialize-examples
   "Serialize path `examples` into JSON-LD Clojure hash-map"
@@ -74,8 +85,7 @@
    ^Model path]
   (let [examples (retrieve-examples path
                                     "sparql/templates/distinct.mustache"
-                                    (update params :limit (partial * sampling-factor)))]
-    ))
+                                    (update params :limit (partial * sampling-factor)))]))
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sampling-factor sparql-endpoint]}

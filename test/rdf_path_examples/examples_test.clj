@@ -50,6 +50,10 @@
                                       :varname "e1"}]})
         "Preprocessing works as expected.")))
 
+(deftest extract-path-nodes
+  (is (valid-sparql-query? (resource->string "sparql/extract_path_nodes.rq"))
+      "SPARQL query for extracting path nodes is syntactically valid."))
+
 (deftest random-selection
   (testing "Random selection generates a syntatically valid SPARQL query."
     (is (valid-template? "sparql/templates/random.mustache"))))

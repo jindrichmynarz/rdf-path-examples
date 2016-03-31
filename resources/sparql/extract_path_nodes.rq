@@ -1,0 +1,19 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rpath: <https://w3id.org/lodsight/rdf-path#>
+
+SELECT DISTINCT ?node
+WHERE {
+  {
+    SELECT DISTINCT ?edge
+    WHERE {
+      [] a rpath:Path ;
+        rpath:edges/rdf:rest*/rdf:first ?edge .
+    }
+  }
+  {
+    ?edge rpath:start ?node .
+  } UNION {
+    ?edge rpath:end ?node .
+    FILTER (!isLiteral(?node))
+  }
+}
