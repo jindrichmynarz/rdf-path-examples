@@ -1,0 +1,24 @@
+{{!
+@param IRI   graph-iri
+@param Array nodes
+}}
+
+CONSTRUCT {
+  ?node ?p ?o .
+}
+WHERE {
+  {{#graph-iri}}
+  GRAPH <{{{graph-iri}}}> {
+  {{/graph-iri}}
+    VALUES ?node {
+      {{#nodes}}
+      <{{{.}}}>
+      {{/nodes}}
+    }
+    OPTIONAL {
+      ?node ?p ?o .
+    }
+  {{#graph-iri}}
+  }
+  {{/graph-iri}}
+}

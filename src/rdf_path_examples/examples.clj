@@ -61,6 +61,15 @@
   [^Model examples]
   (map :node (select-query examples extract-path-nodes-query)))
 
+(defn ^Model retrieve-path-data
+  "Retrieve data describing `path-nodes`."
+  [path-nodes
+   {:keys [graph-iri sparql-endpoint]}]
+  (let [query (render-file "sparql/templates/node_data.mustache"
+                           {:graph-iri graph-iri
+                            :nodes path-nodes})]
+    (construct-query sparql-endpoint query)))
+
 (defn serialize-examples
   "Serialize path `examples` into JSON-LD Clojure hash-map"
   [^Model examples]
@@ -85,7 +94,8 @@
    ^Model path]
   (let [examples (retrieve-examples path
                                     "sparql/templates/distinct.mustache"
-                                    (update params :limit (partial * sampling-factor)))]))
+                                    (update params :limit (partial * sampling-factor)))
+        path-data (retrieve-path-data (extract-path-nodes examples) params)]))
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sampling-factor sparql-endpoint]}
