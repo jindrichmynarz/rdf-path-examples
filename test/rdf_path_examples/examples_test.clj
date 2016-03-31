@@ -2,6 +2,7 @@
   (:require [rdf-path-examples.examples :as examples]
             [rdf-path-examples.json-ld :refer [json-ld->rdf-model]]
             [stencil.core :refer [render-file]]
+            [clojure.tools.logging :as log]
             [clojure.test :refer :all]
             [clojure.java.io :as io])
   (:import [org.apache.jena.query QueryFactory QueryParseException]))
@@ -12,6 +13,19 @@
   {:limit 5
    :selection-method "random"
    :sparql-endpoint "http://lod2-dev.vse.cz:8890/sparql"})
+
+(defn- valid-template?
+  "Test if rendering the template from `template-path` using the default valid configuration
+  results in a syntactically valid SPARQL query."
+  [template-path]
+  (let [query (render-file template-path
+                           (assoc (examples/preprocess-path valid-path)
+                                  :limit (:limit configuration)))]
+    (try (QueryFactory/create query)
+         true
+         (catch QueryParseException e
+           (log/error (.getMessage e))
+           false))))
 
 (deftest preprocess-path
   (let [preprocessed-path (examples/preprocess-path valid-path)]
@@ -28,7 +42,9 @@
         "Preprocessing works as expected.")))
 
 (deftest random-selection
-  (testing "Random selection generates syntatically valid SPARQL query."
-    (is (QueryFactory/create (render-file "sparql/templates/random.mustache"
-                                          (assoc (examples/preprocess-path valid-path)
-                                                 :limit (:limit configuration)))))))
+  (testing "Random selection generates a syntatically valid SPARQL query."
+    (is (valid-template? "sparql/templates/random.mustache"))))
+
+(deftest distinct-selection
+  (testing "Distinct selection generates a syntactically valid SPARQL query."
+    (is (valid-template? "sparql/templates/distinct.mustache"))))

@@ -1,0 +1,52 @@
+{{!
+@param IRI   graph-iri
+@param Array path
+@param Array vars
+@param int   limit
+}}
+
+PREFIX :     <https://w3id.org/lodsight/rdf-path#>
+
+CONSTRUCT {
+  [] a :Path ;
+    :edges (
+      {{#path}}
+        [
+          a :Edge ;
+          :start ?{{start.varname}} ;
+          :edgeProperty <{{{edgeProperty}}}> ;
+          :end ?{{end.varname}}
+        ]
+      {{/path}}
+    ) .
+}
+WHERE {
+  {
+    SELECT DISTINCT {{#vars}} ?{{varname}} {{/vars}}
+    WHERE {
+      {{#graph-iri}}
+      GRAPH <{{{graph-iri}}}> {
+      {{/graph-iri}}
+        {{#path}}
+          {{#start.first}}
+          ?{{start.varname}} a <{{{start.type}}}> .
+          {{/start.first}}
+          
+          ?{{start.varname}} <{{{edgeProperty}}}> ?{{end.varname}} .
+
+          {{#end.datatype}}
+          FILTER sameTerm(DATATYPE(?{{end.varname}}), <{{{end.type}}}>)
+          {{/end.datatype}}
+
+          {{^end.datatype}}
+          ?{{end.varname}} a <{{{end.type}}}> .
+          {{/end.datatype}}
+        {{/path}}
+      {{#graph-iri}}
+      }
+      {{/graph-iri}}
+    }
+    ORDER BY RAND()
+    LIMIT {{limit}}
+  }
+}

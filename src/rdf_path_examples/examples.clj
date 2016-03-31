@@ -65,7 +65,12 @@
 
 (defmethod generate-examples "distinct"
   [{:keys [graph-iri limit sparql-endpoint]}
-   ^Model path])
+   ^Model path]
+  (let [path-data (preprocess-path path)
+        query (render-file "sparql/templates/distinct.mustache"
+                           (assoc path-data
+                                  :graph-iri graph-iri
+                                  :limit limit))]))
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sparql-endpoint]}
