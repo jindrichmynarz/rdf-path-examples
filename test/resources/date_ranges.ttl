@@ -1,0 +1,4 @@
+@prefix :    <http://example.com/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] :property "2000-01-01"^^xsd:date, "1970-04-01"^^xsd:date, "1995-02-28"^^xsd:date .

@@ -57,8 +57,14 @@
 (deftest extract-datatype-property-ranges
   (is (valid-sparql-query? (util/resource->string "sparql/datatype_property_ranges.rq"))
       "SPARQL query for extracting datatype property ranges is syntactically valid.")
-  (let [model (rdf/turtle->rdf-model (util/resource->input-stream "duration_ranges.ttl"))]
-    (is (= (examples/extract-datatype-property-ranges model) {"http://example.com/property" 38880000}))))
+  (let [get-range (comp examples/extract-datatype-property-ranges
+                        rdf/turtle->rdf-model
+                        util/resource->input-stream)]
+    (are [file-name property-range]
+         (= (get-range file-name) {"http://example.com/property" property-range})
+         "duration_ranges.ttl" 38880000
+         "date_ranges.ttl" 938908800
+         "decimal_ranges.ttl" 949.56)))
 
 (deftest random-selection
   (testing "Random selection generates a syntatically valid SPARQL query."
