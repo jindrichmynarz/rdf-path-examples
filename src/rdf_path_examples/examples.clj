@@ -1,6 +1,7 @@
 (ns rdf-path-examples.examples
   (:require [rdf-path-examples.sparql :refer [construct-query select-query]]
             [rdf-path-examples.json-ld :as json-ld]
+            [rdf-path-examples.distance :as distance]
             [rdf-path-examples.util :refer [resource->string]]
             [stencil.core :refer [render-file]]
             [clojure.java.io :as io]
@@ -18,6 +19,9 @@
 
 (defonce extract-path-nodes-query
   (resource->string "sparql/extract_path_nodes.rq"))
+
+(defonce extract-datatype-property-ranges-query
+  (resource->string "sparql/datatype_property_ranges.rq"))
 
 (defn extract-vars
   "Extract variable names from `preprocessed-path`."
@@ -61,6 +65,15 @@
   [^Model examples]
   (map :node (select-query examples extract-path-nodes-query)))
 
+(defn extract-datatype-property-ranges
+  "Extracts ranges of datatype properties from `examples`."
+  [^Model examples]
+  (into {}
+        (for [{:keys [property
+                      propertyRange
+                      datatype]} (select-query examples extract-datatype-property-ranges-query)]
+          [property (distance/ordinal->number datatype propertyRange)])))
+
 (defn ^Model retrieve-path-data
   "Retrieve data describing `path-nodes`."
   [path-nodes
@@ -95,7 +108,8 @@
   (let [examples (retrieve-examples path
                                     "sparql/templates/distinct.mustache"
                                     (update params :limit (partial * sampling-factor)))
-        path-data (retrieve-path-data (extract-path-nodes examples) params)]))
+        path-data (retrieve-path-data (extract-path-nodes examples) params)
+        datatype-property-ranges (extract-datatype-property-ranges path-data)]))
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sampling-factor sparql-endpoint]}

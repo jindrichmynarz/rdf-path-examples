@@ -1,0 +1,15 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?property ?propertyRange (DATATYPE(?propertyRange) AS ?datatype)
+WHERE {
+  {
+    SELECT ?property (MAX(?o) - MIN(?o) AS ?propertyRange) 
+    WHERE {
+      [] ?property ?o .
+      FILTER (isLiteral(?o)
+              &&
+              (isNumeric(?o) || DATATYPE(?o) IN (xsd:date, xsd:dateTime, xsd:duration)))
+    }
+    GROUP BY ?property
+  }
+}
