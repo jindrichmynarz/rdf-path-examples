@@ -16,13 +16,9 @@
   [literal]
   (.getBoolean literal))
 
-(defmethod literal->clj XSDDatatype/XSDduration
-  [literal]
-  (.getLexicalForm literal))
-
 (defmethod literal->clj :default
   [literal]
-  (.getValue literal))
+  (.getLexicalForm literal))
 
 ; ----- Protocols -----
 
@@ -33,7 +29,6 @@
 (extend-protocol IStringifiableNode
   Literal
   (node->clj [node] (literal->clj node))
-    ;(.getLexicalForm node))
   
   Resource
   (node->clj [node] (str node)))
