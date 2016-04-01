@@ -17,6 +17,7 @@
                  [yesparql "0.3.0"]
                  [compojure "1.5.0"]
                  [liberator "0.14.0"]
+                 [joda-time "2.9.1"]
 
                  [incanter/incanter-core "1.9.0"]
                  [incanter/incanter-charts "1.9.0"]
