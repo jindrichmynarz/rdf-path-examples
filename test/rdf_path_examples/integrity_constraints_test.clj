@@ -18,8 +18,9 @@
         "RDF path must not be empty")
     (is (has-constraint-violation? "missing_edge_property.jsonld")
       "Edges of RDF path must have rpath:start, rpath:edgeProperty, and rpath:end.")
-    (is (has-constraint-violation? "discontinuous_path.jsonld")
-      "Paths must be continuous.")
+    (testing "Paths must be continuous."
+      (is (nil? (validate "continuous_path.jsonld")))
+      (is (has-constraint-violation? "discontinuous_path.jsonld")))
     (is (has-constraint-violation? "start_datatype.jsonld")
       "Only edge ends can be datatypes.")
     (is (has-constraint-violation? "missing_type.jsonld")
