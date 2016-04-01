@@ -1,23 +1,12 @@
 (ns rdf-path-examples.json-ld
   (:require [clojure.java.io :as io])
-  (:import [java.io InputStream]
-           [java.util LinkedHashMap]
+  (:import [java.util LinkedHashMap]
            [com.github.jsonldjava.core JsonLdOptions JsonLdProcessor]
-           [com.github.jsonldjava.utils JsonUtils]
-           [org.apache.jena.query DatasetFactory]
-           [org.apache.jena.rdf.model Model]
-           [org.apache.jena.riot Lang RDFDataMgr]))
+           [com.github.jsonldjava.utils JsonUtils]))
 
 (defonce ^:private
   json-ld-options
   (doto (JsonLdOptions.) (.setUseNativeTypes true)))
-
-(defn ^Model json-ld->rdf-model
-  "Convert input stream `json-ld` into Jena Model"
-  [^InputStream json-ld]
-  (let [dataset (DatasetFactory/create)]
-    (RDFDataMgr/read dataset json-ld Lang/JSONLD)
-    (.getDefaultModel dataset)))
 
 (defn compact
   "Compact `json-ld` using `context` with optional `options`"

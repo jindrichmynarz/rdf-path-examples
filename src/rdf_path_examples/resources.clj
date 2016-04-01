@@ -1,6 +1,6 @@
 (ns rdf-path-examples.resources
   (:require [rdf-path-examples.schema :refer [Config]]
-            [rdf-path-examples.json-ld :as json-ld]
+            [rdf-path-examples.rdf :as rdf]
             [rdf-path-examples.integrity-constraints :refer [validate-path]]
             [rdf-path-examples.examples :refer [generate-examples]]
             [rdf-path-examples.views :as views]
@@ -46,7 +46,7 @@
                          (= content-type "application/ld+json"))
   :malformed? (fn [{{:keys [body query-params]} :request}]
                 (let [configuration (parse-query-params query-params)
-                      path (json-ld/json-ld->rdf-model body)]
+                      path (rdf/json-ld->rdf-model body)]
                   (if-let [error (or (:error configuration) (validate-path path))]
                     [true (assoc default-response
                                  :malformed-error (if (instance? ErrorContainer configuration)

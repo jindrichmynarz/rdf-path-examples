@@ -3,7 +3,7 @@
             [rdf-path-examples.examples :as examples]
             [rdf-path-examples.util :refer [resource->string]]
             [rdf-path-examples.sparql :refer [ask-query]]
-            [rdf-path-examples.json-ld :refer [json-ld->rdf-model]]
+            [rdf-path-examples.rdf :refer [json-ld->rdf-model]]
             [clojure.test :refer :all]
             [ring.mock.request :as mock])
   (:import [java.io ByteArrayInputStream]))
