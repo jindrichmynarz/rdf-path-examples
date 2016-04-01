@@ -3,7 +3,26 @@
   (:import [org.apache.jena.rdf.model Literal Model Resource]
            [org.apache.jena.query QueryExecutionFactory QueryFactory]
            [org.apache.jena.query Dataset]
-           [org.apache.jena.update UpdateAction UpdateFactory]))
+           [org.apache.jena.update UpdateAction UpdateFactory]
+           [org.apache.jena.datatypes.xsd XSDDatatype]))
+
+; ----- Multimethods -----
+
+(defmulti literal->clj
+  "Convert RDF literal to a Clojure scalar data type."
+  (fn [literal] (.getDatatype literal)))
+
+(defmethod literal->clj XSDDatatype/XSDboolean
+  [literal]
+  (.getBoolean literal))
+
+(defmethod literal->clj XSDDatatype/XSDduration
+  [literal]
+  (.getLexicalForm literal))
+
+(defmethod literal->clj :default
+  [literal]
+  (.getValue literal))
 
 ; ----- Protocols -----
 
@@ -13,7 +32,8 @@
 
 (extend-protocol IStringifiableNode
   Literal
-  (node->clj [node] (.getValue node))
+  (node->clj [node] (literal->clj node))
+    ;(.getLexicalForm node))
   
   Resource
   (node->clj [node] (str node)))
@@ -28,7 +48,7 @@
   "Process SPARQL SELECT `solution` for `result-vars`."
   [result-vars solution]
   (into {} (mapv (partial process-select-binding solution) result-vars)))
- 
+
 ; ----- Public functions -----
 
 (defn ^Boolean ask-query
