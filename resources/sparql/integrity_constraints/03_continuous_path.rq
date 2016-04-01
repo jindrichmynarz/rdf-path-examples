@@ -5,22 +5,15 @@ PREFIX spin:  <http://spinrdf.org/spin#>
 
 CONSTRUCT {
   [] a spin:ConstraintViolation ;
-    spin:violationRoot ?path ;
+    spin:violationRoot ?next ;
     spin:violationPath rpath:start ;
+    spin:violationValue ?o ;
     rdfs:label "Path is not continuous."@en .
 }
 WHERE {
-  {
-    SELECT ?path
-    WHERE {
-      ?path a rpath:Path ;
-        rpath:edges/rdf:rest*/rdf:first ?edge .
-      ?edge rpath:start ?start .
-      FILTER NOT EXISTS {
-        [] rpath:end ?start .
-      }
-    }
-    GROUP BY ?path
-    HAVING (COUNT(DISTINCT ?start) > 1)
+  [] rdf:first/rpath:end/rdf:type ?o ;
+    rdf:rest/rdf:first ?next .
+  FILTER NOT EXISTS {
+    ?next rpath:start/rdf:type ?o .
   }
 }
