@@ -12,4 +12,6 @@
   (when (and s (re-find #"^-?\d+\.?\d*$" s))
     (read-string s)))
 
-(def resource->string (comp slurp io/resource)) 
+(def resource->input-stream (comp io/input-stream io/resource))
+
+(def resource->string (comp slurp io/resource))
