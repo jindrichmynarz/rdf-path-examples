@@ -2,6 +2,7 @@
   (:require [rdf-path-examples.examples :as examples]
             [rdf-path-examples.rdf :as rdf]
             [rdf-path-examples.util :as util]
+            [rdf-path-examples.sparql :as sparql]
             [stencil.core :refer [render-file]]
             [clojure.tools.logging :as log]
             [clojure.test :refer :all]
@@ -65,6 +66,13 @@
          "duration_ranges.ttl" 38880000
          "date_ranges.ttl" 938908800
          "decimal_ranges.ttl" 949.56)))
+
+(deftest get-path-ids
+  (let [random-examples (rdf/json-ld->rdf-model (util/resource->input-stream "random_examples.jsonld"))]
+    (is (sparql/ask-query random-examples
+                          (render-file "has_path_id.mustache"
+                                       {:path (rand-nth (examples/get-path-ids random-examples))}))
+        "Paths can be found by their blank node IDs.")))
 
 (deftest random-selection
   (testing "Random selection generates a syntatically valid SPARQL query."
