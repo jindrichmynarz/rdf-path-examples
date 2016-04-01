@@ -6,6 +6,8 @@
   (:import [de.lmu.ifi.dbs.elki.distance.distancefunction DistanceFunction]
            [org.joda.time Period]))
 
+; ----- Private functions -----
+
 (defn- trim-last-char
   "Trim last character in string `s`."
   [s]
@@ -26,7 +28,7 @@
            milliseconds 0}}]
   (Period. years months weeks days hours minutes seconds milliseconds))
 
-(defn parse-duration
+(defn ^Period parse-duration
   "Parse `duration`"
   [^String duration]
   (when-let [match (re-matches duration-regex duration)]
@@ -45,6 +47,16 @@
                 :minutes minutes
                 :seconds seconds))))
 
+(defn period->seconds
+  "Convert `period` to an approximate number of `seconds`."
+  [^Period period]
+  (+ (.getSeconds period)
+     (* (.getMinutes period) 60)
+     (* (.getHours period) 60 60)
+     (* (.getDays period) 60 60 24)
+     (* (.getMonths period) 60 60 24 30)
+     (* (.getYears period) 60 60 24 30 12)))
+
 (defmulti ordinal->number
   "Cast ordinal literal as number."
   (fn [datatype literal] (data-type->xml-schema datatype)))
@@ -55,7 +67,7 @@
 
 (defmethod ordinal->number :xsd/duration
   [_ literal]
-  )
+  (period->seconds (parse-duration literal)))
 
 (def distance-function
   (reify DistanceFunction
