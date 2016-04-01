@@ -1,0 +1,4 @@
+@prefix :    <http://example.com/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] :property "P1Y"^^xsd:duration, "-P3M"^^xsd:duration, "PT1.23S"^^xsd:duration .

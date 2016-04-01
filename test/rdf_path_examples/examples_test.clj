@@ -1,14 +1,14 @@
 (ns rdf-path-examples.examples-test
   (:require [rdf-path-examples.examples :as examples]
-            [rdf-path-examples.rdf :refer [json-ld->rdf-model]]
-            [rdf-path-examples.util :refer [resource->string]]
+            [rdf-path-examples.rdf :as rdf]
+            [rdf-path-examples.util :as util]
             [stencil.core :refer [render-file]]
             [clojure.tools.logging :as log]
             [clojure.test :refer :all]
             [clojure.java.io :as io])
   (:import [org.apache.jena.query QueryFactory QueryParseException]))
 
-(def valid-path (json-ld->rdf-model (io/input-stream (io/resource "valid_path.jsonld"))))
+(def valid-path (rdf/json-ld->rdf-model (util/resource->input-stream "valid_path.jsonld")))
 
 (def configuration
   {:limit 5
@@ -35,7 +35,7 @@
     (valid-sparql-query? query)))
 
 (deftest preprocess-path
-  (is (valid-sparql-query? (resource->string "sparql/extract_path.rq"))
+  (is (valid-sparql-query? (util/resource->string "sparql/extract_path.rq"))
       "SPARQL query for extracting paths is syntactically valid.")
   (let [preprocessed-path (examples/preprocess-path valid-path)]
     (is (= preprocessed-path {:path [{:start {:first true
@@ -51,8 +51,14 @@
         "Preprocessing works as expected.")))
 
 (deftest extract-path-nodes
-  (is (valid-sparql-query? (resource->string "sparql/extract_path_nodes.rq"))
+  (is (valid-sparql-query? (util/resource->string "sparql/extract_path_nodes.rq"))
       "SPARQL query for extracting path nodes is syntactically valid."))
+
+(deftest extract-datatype-property-ranges
+  (is (valid-sparql-query? (util/resource->string "sparql/datatype_property_ranges.rq"))
+      "SPARQL query for extracting datatype property ranges is syntactically valid.")
+  (let [model (rdf/turtle->rdf-model (util/resource->input-stream "duration_ranges.ttl"))]
+    (is (= (examples/extract-datatype-property-ranges model) {"http://example.com/property" 38880000}))))
 
 (deftest random-selection
   (testing "Random selection generates a syntatically valid SPARQL query."
