@@ -72,15 +72,7 @@
         examples-map (examples/extract-examples random-examples)]
     (is (sparql/ask-query random-examples
                           (render-file "has_path_id.mustache"
-                                       {:path (first (rand-nth (into [] examples-map)))})))
-    (is (map? examples-map))
-    (is (= (count examples-map) 5))))
-
-(deftest get-path-ids
-  (let [random-examples (rdf/json-ld->rdf-model (util/resource->input-stream "random_examples.jsonld"))]
-    (is (sparql/ask-query random-examples
-                          (render-file "has_path_id.mustache"
-                                       {:path (rand-nth (examples/get-path-ids random-examples))}))
+                                       {:path (first (rand-nth (into [] examples-map)))}))
         "Paths can be found by their blank node IDs.")))
 
 (deftest random-selection

@@ -24,9 +24,6 @@
 (defonce extract-datatype-property-ranges-query
   (resource->string "sparql/datatype_property_ranges.rq"))
 
-(defonce get-path-ids-query
-  (resource->string "sparql/get_path_ids.rq"))
-
 (defonce extract-examples-query
   (resource->string "sparql/extract_examples.rq"))
 
@@ -90,11 +87,6 @@
                       datatype]} (select-query examples extract-datatype-property-ranges-query)]
           [property (distance/ordinal->number datatype propertyRange)])))
 
-(defn get-path-ids
-  "Get path blank node IDs from `examples`."
-  [^Model examples]
-  (map :path (select-query examples get-path-ids-query)))
-
 (defn ^Model retrieve-path-data
   "Retrieve data describing `path-nodes`."
   [path-nodes
@@ -133,7 +125,7 @@
         path-data (retrieve-path-data (extract-path-nodes examples) params)
         datatype-property-ranges (extract-datatype-property-ranges path-data)
         path-distances (into {} (map (juxt set distance/compute-distance)
-                                     (combinations (get-path-ids examples) 2)))]))
+                                     (combinations path-map 2)))]))
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sampling-factor sparql-endpoint]}

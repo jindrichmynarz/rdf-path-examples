@@ -1,6 +1,0 @@
-PREFIX rpath: <https://w3id.org/lodsight/rdf-path#>
-
-SELECT DISTINCT ?path 
-WHERE {
-  ?path a rpath:Path .
-}
