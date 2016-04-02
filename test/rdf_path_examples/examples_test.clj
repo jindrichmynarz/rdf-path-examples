@@ -67,6 +67,15 @@
          "date_ranges.ttl" 938908800
          "decimal_ranges.ttl" 949.56)))
 
+(deftest extract-examples
+  (let [random-examples (rdf/json-ld->rdf-model (util/resource->input-stream "random_examples.jsonld"))
+        examples-map (examples/extract-examples random-examples)]
+    (is (sparql/ask-query random-examples
+                          (render-file "has_path_id.mustache"
+                                       {:path (first (rand-nth (into [] examples-map)))})))
+    (is (map? examples-map))
+    (is (= (count examples-map) 5))))
+
 (deftest get-path-ids
   (let [random-examples (rdf/json-ld->rdf-model (util/resource->input-stream "random_examples.jsonld"))]
     (is (sparql/ask-query random-examples

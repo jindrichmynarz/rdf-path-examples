@@ -7,7 +7,8 @@
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [clojure.set :refer [union]]
-            [yesparql.sparql :refer [model->json-ld]])
+            [yesparql.sparql :refer [model->json-ld]]
+            [clojure.math.combinatorics :refer [combinations]])
   (:import [org.apache.jena.rdf.model Model]
            [com.github.jsonldjava.utils JsonUtils]))
 
@@ -25,6 +26,9 @@
 
 (defonce get-path-ids-query
   (resource->string "sparql/get_path_ids.rq"))
+
+(defonce extract-examples-query
+  (resource->string "sparql/extract_examples.rq"))
 
 (defn extract-vars
   "Extract variable names from `preprocessed-path`."
@@ -62,6 +66,15 @@
                                   :graph-iri graph-iri
                                   :limit limit))]
     (construct-query sparql-endpoint query)))
+
+(defn extract-examples
+  "Extract paths from `examples`."
+  [^Model examples]
+  (into {} (map (juxt key (comp dedupe
+                                (partial apply concat)
+                                (partial map (juxt :start :end))
+                                val))
+                (group-by :path (select-query examples extract-examples-query)))))
 
 (defn extract-path-nodes
   "Extract path nodes from `examples`."
@@ -116,8 +129,11 @@
   (let [examples (retrieve-examples path
                                     "sparql/templates/distinct.mustache"
                                     (update params :limit (partial * sampling-factor)))
+        path-map (extract-examples examples)
         path-data (retrieve-path-data (extract-path-nodes examples) params)
-        datatype-property-ranges (extract-datatype-property-ranges path-data)]))
+        datatype-property-ranges (extract-datatype-property-ranges path-data)
+        path-distances (into {} (map (juxt set distance/compute-distance)
+                                     (combinations (get-path-ids examples) 2)))]))
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sampling-factor sparql-endpoint]}
