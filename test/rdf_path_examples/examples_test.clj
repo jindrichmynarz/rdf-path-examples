@@ -40,11 +40,11 @@
       "SPARQL query for extracting paths is syntactically valid.")
   (let [preprocessed-path (examples/preprocess-path valid-path)]
     (is (= preprocessed-path {:path [{:start {:first true
-                                              :type "http://purl.org/goodrelations/v1#BusinessEntity"
+                                              :type "<http://purl.org/goodrelations/v1#BusinessEntity>"
                                               :varname "e0"}
-                                      :edgeProperty "http://xmlns.com/foaf/0.1/page"
+                                      :edgeProperty "<http://xmlns.com/foaf/0.1/page>"
                                       :end {:datatype true
-                                            :type "http://www.w3.org/2001/XMLSchema#string"
+                                            :type "<http://www.w3.org/2001/XMLSchema#string>"
                                             :varname "e1"}}]
                               :vars [{:varname "e0"}
                                      {:datatype true
@@ -62,18 +62,17 @@
                         rdf/turtle->rdf-model
                         util/resource->input-stream)]
     (are [file-name property-range]
-         (= (get-range file-name) {"http://example.com/property" property-range})
+         (= (get-range file-name) {"<http://example.com/property>" property-range})
          "duration_ranges.ttl" 38880000
          "date_ranges.ttl" 938908800
          "decimal_ranges.ttl" 949.56)))
 
 (deftest extract-examples
   (let [random-examples (rdf/json-ld->rdf-model (util/resource->input-stream "random_examples.jsonld"))
-        examples-map (examples/extract-examples random-examples)]
-    (is (sparql/ask-query random-examples
-                          (render-file "has_path_id.mustache"
-                                       {:path (first (rand-nth (into [] examples-map)))}))
-        "Paths can be found by their blank node IDs.")))
+        examples-map (examples/extract-examples random-examples)
+        query (render-file "has_path_id.mustache"
+                           {:path (first (rand-nth (into [] examples-map)))})]
+    (is (sparql/ask-query random-examples query) "Paths can be found by their blank node IDs.")))
 
 (deftest random-selection
   (testing "Random selection generates a syntatically valid SPARQL query."

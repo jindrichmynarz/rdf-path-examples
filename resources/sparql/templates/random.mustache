@@ -15,7 +15,7 @@ CONSTRUCT {
         [
           a :Edge ;
           :start ?{{start.varname}} ;
-          :edgeProperty <{{{edgeProperty}}}> ;
+          :edgeProperty {{{edgeProperty}}} ;
           :end ?{{end.varname}}
         ]
       {{/path}}
@@ -31,21 +31,21 @@ WHERE {
     SELECT DISTINCT {{#vars}} ?{{varname}} {{/vars}}
     WHERE {
       {{#graph-iri}}
-      GRAPH <{{{graph-iri}}}> {
+      GRAPH {{{graph-iri}}} {
       {{/graph-iri}}
         {{#path}}
           {{#start.first}}
-          ?{{start.varname}} a <{{{start.type}}}> . 
+          ?{{start.varname}} a {{{start.type}}} . 
           {{/start.first}}
           
-          ?{{start.varname}} <{{{edgeProperty}}}> ?{{end.varname}} .
+          ?{{start.varname}} {{{edgeProperty}}} ?{{end.varname}} .
 
           {{#end.datatype}}
-          FILTER sameTerm(DATATYPE(?{{end.varname}}), <{{{end.type}}}>)
+          FILTER sameTerm(DATATYPE(?{{end.varname}}), {{{end.type}}})
           {{/end.datatype}}
 
           {{^end.datatype}}
-          ?{{end.varname}} a <{{{end.type}}}> .
+          ?{{end.varname}} a {{{end.type}}} .
           {{/end.datatype}}
         {{/path}}
       {{#graph-iri}}
@@ -59,7 +59,7 @@ WHERE {
   {{^datatype}} {{! No OPTIONAL is needed for datatype vars. }}
   OPTIONAL {
     {{#graph-iri}}
-    GRAPH <{{{graph-iri}}}> {
+    GRAPH {{{graph-iri}}} {
     {{/graph-iri}}
       ?{{varname}} rdfs:label ?{{varname}}o .
     {{#graph-iri}}

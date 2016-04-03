@@ -31,7 +31,10 @@
   (node->clj [node] (literal->clj node))
   
   Resource
-  (node->clj [node] (str node)))
+  (node->clj [node]
+    (if (.isAnon node)
+      (str "_:" (.getId node))
+      (str "<" (.getURI node) ">"))))
 
 ; ----- Private functions -----
 
