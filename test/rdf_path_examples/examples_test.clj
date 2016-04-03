@@ -69,10 +69,7 @@
 
 (deftest extract-examples
   (let [random-examples (rdf/json-ld->rdf-model (util/resource->input-stream "random_examples.jsonld"))
-        examples-map (examples/extract-examples random-examples)
-        query (render-file "has_path_id.mustache"
-                           {:path (first (rand-nth (into [] examples-map)))})]
-    (is (sparql/ask-query random-examples query) "Paths can be found by their blank node IDs.")))
+        examples-map (examples/extract-examples random-examples)]))
 
 (deftest random-selection
   (testing "Random selection generates a syntatically valid SPARQL query."
