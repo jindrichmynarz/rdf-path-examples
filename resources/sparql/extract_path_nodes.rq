@@ -14,6 +14,6 @@ WHERE {
     ?edge rpath:start ?node .
   } UNION {
     ?edge rpath:end ?node .
-    FILTER (!isLiteral(?node))
   }
+  FILTER isIRI(?node)
 }
