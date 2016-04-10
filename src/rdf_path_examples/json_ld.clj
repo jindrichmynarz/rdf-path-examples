@@ -16,6 +16,13 @@
       :or {options json-ld-options}}]
   (JsonLdProcessor/compact json-ld context options))
 
+(defn expand
+  "Expand `json-ld` with optional `options`."
+  [^LinkedHashMap json-ld
+   & {:keys [options]
+      :or {options json-ld-options}}]
+  (JsonLdProcessor/expand json-ld options))
+
 (def load-resource
   "Load JSON resource from `resource-path`."
   (comp #(JsonUtils/fromInputStream %) io/input-stream io/resource))
