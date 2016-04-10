@@ -19,13 +19,6 @@
   {:limit 5
    :sampling-factor 20})
 
-(defn- wrap-graph-iri
-  "Wrap :graph-iri in `params` as absolute IRI in angle braces."
-  [params]
-  (if (:graph-iri params)
-    (update params :graph-iri #(str "<" % ">"))
-    params))
-
 (def parse-query-params
   (coerce/coercer Config coerce/string-coercion-matcher))
 
@@ -59,8 +52,7 @@
                                  :malformed-error (if (instance? ErrorContainer configuration)
                                                     (str error)
                                                     error))]
-                    [false {:request {:params (merge default-params
-                                                     (wrap-graph-iri (keywordize-keys configuration)))}
+                    [false {:request {:params (merge default-params (keywordize-keys configuration))}
                             :rdf-path path}])))
   :new? (constantly false)
   :respond-with-entity? (constantly true))

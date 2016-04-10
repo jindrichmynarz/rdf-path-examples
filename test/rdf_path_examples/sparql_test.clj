@@ -8,7 +8,7 @@
   (testing "Conversion of RDF literals to Clojure values."
     (let [model (ModelFactory/createDefaultModel)
           bool (rand-nth [true false])]
-      (is (= (sparql/node->clj (.createTypedLiteral model bool)) bool) 
+      (is (= (get (sparql/node->clj (.createTypedLiteral model bool)) "@value") bool) 
           "Booleans are correctly casted."))))
 
 (deftest update-operation

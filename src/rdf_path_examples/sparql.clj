@@ -1,5 +1,6 @@
 (ns rdf-path-examples.sparql
-  (:require [clojure.tools.logging :as log])
+  (:require [rdf-path-examples.prefixes :refer [xsd]]
+            [clojure.tools.logging :as log])
   (:import [org.apache.jena.rdf.model Literal Model Resource]
            [org.apache.jena.query QueryExecutionFactory QueryFactory]
            [org.apache.jena.query Dataset]
@@ -14,11 +15,12 @@
 
 (defmethod literal->clj XSDDatatype/XSDboolean
   [literal]
-  (.getBoolean literal))
+  {"@type" (xsd "boolean")
+   "@value" (.getBoolean literal)})
 
 (defmethod literal->clj :default
   [literal]
-  (.getLexicalForm literal))
+  {"@value" (.getLexicalForm literal)})
 
 ; ----- Protocols -----
 
@@ -33,8 +35,8 @@
   Resource
   (node->clj [node]
     (if (.isAnon node)
-      (str "_:" (.getId node))
-      (str "<" (.getURI node) ">"))))
+      {"@id" (str "_:" (.getId node))}
+      {"@id" (.getURI node)})))
 
 ; ----- Private functions -----
 

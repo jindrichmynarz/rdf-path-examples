@@ -7,9 +7,7 @@
   (:import [java.net URI URISyntaxException]
            [clojure.lang PersistentArrayMap PersistentVector]))
 
-; ----- Private functions -----
-
-(defn- xml-schema-data-type?
+(defn xml-schema-data-type?
   "Predicate testing if `data-type` is from XML Schema."
   [^String data-type]
   (.startsWith data-type (prefix/xsd)))

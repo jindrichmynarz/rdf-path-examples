@@ -8,11 +8,11 @@ CONSTRUCT {
 }
 WHERE {
   {{#graph-iri}}
-  GRAPH {{{graph-iri}}} {
+  GRAPH <{{{graph-iri}}}> {
   {{/graph-iri}}
     VALUES ?node {
       {{#nodes}}
-      {{{.}}}
+      <{{{.}}}>
       {{/nodes}}
     }
     OPTIONAL {
