@@ -1,7 +1,6 @@
 (ns rdf-path-examples.integrity-constraints
   (:require [rdf-path-examples.sparql :refer [construct-query]]
-            [clojure.java.io :as io]
-            [yesparql.sparql :refer [model->json-ld]])
+            [clojure.java.io :as io])
   (:import [org.apache.jena.rdf.model Model]
            [org.apache.jena.query Dataset]
            [com.github.jsonldjava.utils JsonUtils]))
