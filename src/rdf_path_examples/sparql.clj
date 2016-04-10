@@ -1,5 +1,6 @@
 (ns rdf-path-examples.sparql
-  (:require [rdf-path-examples.prefixes :refer [xsd]]
+  (:require [rdf-path-examples.xml-schema :as xsd]
+            [rdf-path-examples.type-inference :as infer]
             [clojure.tools.logging :as log])
   (:import [org.apache.jena.rdf.model Literal Model Resource]
            [org.apache.jena.query QueryExecutionFactory QueryFactory]
@@ -11,16 +12,21 @@
 
 (defmulti literal->clj
   "Convert RDF literal to a Clojure scalar data type."
-  (fn [literal] (.getDatatype literal)))
+  (fn [{datatype "@type"}]
+    (when (infer/xml-schema-data-type? datatype)
+      (infer/data-type->xml-schema datatype))))
 
-(defmethod literal->clj XSDDatatype/XSDboolean
+(defmethod literal->clj ::xsd/duration
   [literal]
-  {"@type" (xsd "boolean")
-   "@value" (.getBoolean literal)})
+  (update literal "@value" str))
+
+(defmethod literal->clj ::xsd/decimal
+  [literal]
+  (update literal "@value" double))
 
 (defmethod literal->clj :default
   [literal]
-  {"@value" (.getLexicalForm literal)})
+  literal)
 
 ; ----- Protocols -----
 
@@ -30,7 +36,10 @@
 
 (extend-protocol IStringifiableNode
   Literal
-  (node->clj [node] (literal->clj node))
+  (node->clj [node]
+    (let [datatype (.getDatatypeURI node)]
+      (literal->clj (cond-> {"@value" (.getValue node)}
+                      datatype (assoc "@type" datatype)))))
   
   Resource
   (node->clj [node]

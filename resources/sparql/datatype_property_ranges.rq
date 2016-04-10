@@ -1,6 +1,6 @@
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-SELECT ?property ?propertyRange (DATATYPE(?propertyRange) AS ?datatype)
+SELECT ?property ?propertyRange
 WHERE {
   {
     SELECT ?property (MAX(?o) - MIN(?o) AS ?propertyRange) 
