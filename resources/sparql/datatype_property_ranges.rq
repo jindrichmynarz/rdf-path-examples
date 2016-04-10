@@ -12,4 +12,5 @@ WHERE {
     }
     GROUP BY ?property
   }
+  FILTER BOUND(?propertyRange) # Guard against errors when applying MAX or MIN to invalid literal.
 }
