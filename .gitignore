@@ -72,3 +72,6 @@ Temporary Items
 
 # Ignore logs
 log
+
+# Ignore test DB
+/test-db/
