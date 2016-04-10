@@ -1,0 +1,19 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rpath: <https://w3id.org/lodsight/rdf-path#>
+
+SELECT ?path ?start ?end
+WHERE {
+  {
+    SELECT ?path ?edge (COUNT(?mid) - 1 AS ?position)
+    WHERE {
+      ?path a rpath:Path ;
+        rpath:edges/rdf:rest* ?mid .
+      ?mid rdf:rest*/rdf:first ?edge .
+    }
+    GROUP BY ?path ?edge
+  }
+  ?edge rpath:start ?start ;
+    rpath:end ?end .
+}
+ORDER BY ?path ?position
