@@ -26,43 +26,36 @@
 
 (defn infer-datatype
   "Infers data type of `literal`."
-  [^String literal]
-  (if (absolute-uri? literal)
-    ::xsd/anyURI
-    (condp re-matches literal
-      #"^\d{4}-\d{2}-\d{2}$" ::xsd/date
-      #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+\-]\d{2}:\d{2}|Z)?$" ::xsd/dateTime
-      duration-regex ::xsd/duration
-      ::xsd/string)))
+  [literal]
+  (cond (instance? Boolean literal) ::xsd/boolean
+        (number? literal) ::xsd/decimal
+        (absolute-uri? literal) ::xsd/anyURI
+        :else (condp re-matches literal
+                #"^\d{4}-\d{2}-\d{2}$" ::xsd/date
+                #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+\-]\d{2}:\d{2}|Z)?$" ::xsd/dateTime
+                duration-regex ::xsd/duration
+                ::xsd/string)))
 
 (defprotocol Resource
   "An RDF resource"
   (infer-type [resource] "resource type"))
 
 (extend-protocol Resource
-  Boolean
-  (infer-type [_] ::xsd/boolean)
-
-  Number
-  (infer-type [_] ::xsd/decimal)
-  
   PersistentArrayMap
-  (infer-type [{value "@value"
+  (infer-type [{id "@id"
+                value "@value"
                 resource-type "@type"}]
-    (cond (nil? value)
+    (cond id
           :referent
           (and resource-type (xml-schema-data-type? resource-type))
           (data-type->xml-schema resource-type)
-          :else (infer-type value)))
+          :else (infer-datatype value)))
 
   PersistentVector
   ; We expect the vector's ranges to be homogeneous.
   ; Their data type is inferred from their first member.
   (infer-type [[sample-resource & _]]
-    (infer-type sample-resource))
-
-  String
-  (infer-type [value] (infer-datatype value)))
+    (infer-type sample-resource)))
 
 (defn lowest-common-ancestor
   "Compute lowest common ancestor in the type hierarchy of `a` and `b`."
