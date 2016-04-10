@@ -20,6 +20,11 @@
   [literal]
   (update literal "@value" str))
 
+(defmethod literal->clj ::xsd/integer
+  ; Prevent casting integers to doubles.
+  [literal]
+  literal)
+
 (defmethod literal->clj ::xsd/decimal
   [literal]
   (update literal "@value" double))

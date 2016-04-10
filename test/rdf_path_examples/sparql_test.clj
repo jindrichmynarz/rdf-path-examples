@@ -1,15 +1,18 @@
 (ns rdf-path-examples.sparql-test
   (:require [rdf-path-examples.sparql :as sparql]
             [rdf-path-examples.util :refer [resource->string]]
-            [clojure.test :refer :all])
+            [clojure.test :refer :all]
+            [clojure.tools.logging :as log])
   (:import [org.apache.jena.rdf.model ModelFactory]))
 
 (deftest node->clj
   (testing "Conversion of RDF literals to Clojure values."
     (let [model (ModelFactory/createDefaultModel)
-          bool (rand-nth [true false])]
-      (is (= (get (sparql/node->clj (.createTypedLiteral model bool)) "@value") bool) 
-          "Booleans are correctly casted."))))
+          convert (fn [literal] (get (sparql/node->clj (.createTypedLiteral model literal)) "@value"))]
+      (are [literal] (= (convert literal) literal)
+           false
+           9
+           3.14))))
 
 (deftest update-operation
   (testing "Execution of SPARQL Update operations"
