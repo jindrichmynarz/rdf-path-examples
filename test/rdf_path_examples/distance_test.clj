@@ -45,7 +45,7 @@
       (are [a b distance] (== (distance-fn a b) distance)
            {"@value" 0} {"@value" 1} 0.1
            {"@value" -10} {"@value" 5} 1.5))
-    (testing "Distance between dates and date-times"
+    (testing "Distance between dates, date-times, and durations."
       (are [a b c d] (= (distance-fn a b) (distance-fn c d))
            ; A day difference
            {"@value" "2015-01-01"} {"@value" "2015-01-02"}
@@ -55,7 +55,10 @@
            {"@value" "2014-01-01"} {"@value" "2015-01-01"}
            ; A minutes difference
            {"@value" "2015-01-01T12:00:00.000Z"} {"@value" "2015-01-01T12:01:00.000Z"}
-           {"@value" "2015-01-01T12:01:00.000Z"} {"@value" "2015-01-01T12:02:00.000Z"}))
+           {"@value" "2015-01-01T12:01:00.000Z"} {"@value" "2015-01-01T12:02:00.000Z"}
+           ; A month difference
+           {"@value" "P5Y"} {"@value" "P4Y11M"}
+           {"@value" "P1M"} {"@value" "P2M"}))
     (testing "Malformed literals have maximum distance."
       (are [a b] (== (distance-fn a b) 1)
            {"@type" (xsd "date") "@value" "2016-04-31"} {"@type" (xsd "date") "@value" "2016-04-30"}
