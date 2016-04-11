@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/data.csv "0.1.3"]
-                 [prismatic/schema "1.0.5"]
+                 [prismatic/schema "1.1.0"]
                  [schema-contrib "0.1.5"]
                  [instaparse "1.4.1"]
                  [stencil "0.5.0" :exclusions [instaparse]]
@@ -16,9 +16,10 @@
                  [com.github.jsonld-java/jsonld-java "0.8.2"]
                  [yesparql "0.3.0"]
                  [compojure "1.5.0"]
-                 [liberator "0.14.0"]
-                 [joda-time "2.9.1"]
+                 [liberator "0.14.1"]
+                 [joda-time "2.9.3"]
                  [org.clojure/math.combinatorics "0.1.1"]
+                 [cheshire "5.6.0"]
 
                  [incanter/incanter-core "1.9.0"]
                  [incanter/incanter-charts "1.9.0"]
@@ -30,7 +31,7 @@
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring/ring-mock "0.3.0"]
                                   [org.clojure/test.check "0.9.0"]
-                                  [pjstadig/humane-test-output "0.7.1"]]
+                                  [pjstadig/humane-test-output "0.8.0"]]
                    :injections [(require 'pjstadig.humane-test-output)
                                 (pjstadig.humane-test-output/activate!)]
                    :resource-paths ["test/resources"]}
