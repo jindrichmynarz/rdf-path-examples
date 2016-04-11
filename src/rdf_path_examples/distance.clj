@@ -5,6 +5,7 @@
             [clj-fuzzy.stemmers :refer [porter]]
             [clj-fuzzy.metrics :refer [jaro-winkler]]
             [clojure.string :as string]
+            [clojure.set :refer [intersection]]
             [clj-time.format :as time-format]
             [clj-time.coerce :as time-coerce]
             [clojure.tools.logging :as log])
@@ -13,6 +14,8 @@
            [org.joda.time.format DateTimeFormatter]
            [clojure.lang PersistentArrayMap PersistentVector]
            [java.net URI URISyntaxException]))
+
+(declare compute-distance' dispatch-distance get-resources-distance)
 
 ; ----- Private vars -----
 
@@ -108,6 +111,15 @@
     (double (/ (Math/abs (- a b))
                (or maximum 10000)))))
 
+(defn normalized-numeric-distance'
+  "Normalized numeric distance returning maximum distance if parsing either `a` or `b` fails."
+  [property-ranges property parse-fn [a b]]
+  (try
+    (normalized-numeric-distance (get property-ranges property)
+                                 (parse-fn a)
+                                 (parse-fn b))
+    (catch IllegalArgumentException _ 1)))
+
 (defn coerce-to-seconds
   "Coerce string `s` to seconds from Unix time's start.
   `s` must match the format expected by the `parser`."
@@ -134,6 +146,14 @@
    ^String b]
   (- 1 (jaro-winkler a b)))
 
+(defn map-overlaps
+  "Get overlapping properties in `a` and `b`."
+  [^PersistentArrayMap a
+   ^PersistentArrayMap b]
+  (when-let [matching-properties (seq (sort (apply intersection (map (comp set keys) [a b]))))]
+    (mapv #(mapv vec (select-keys % matching-properties))
+          [a b])))
+
 (defmulti compute-distance
   "Compute distance of resources `a` and `b`. Dispatches on the lowest common ancestor
   of the inferred types of the compared resources."
@@ -142,21 +162,31 @@
           b-type (infer/infer-type b)]
       (infer/lowest-common-ancestor a-type b-type))))
 
+(defmethod compute-distance :referent
+  [resolve-fn
+   property-ranges
+   [_ {a "@id"}]
+   [_ {b "@id"}]]
+  ; Comparison by IRI
+  (if (= a b)
+    0
+    ; Comparison by value
+    (let [a-desc (resolve-fn a)
+          b-desc (resolve-fn b)
+          distance-fn (partial compute-distance' resolve-fn property-ranges)]
+      (if-let [[a' b'] (map-overlaps a-desc b-desc)]
+        (/ (reduce + (map (fn [a'' b''] (dispatch-distance distance-fn a'' b'')) a' b'))
+           (- (+ (count a-desc) (count b-desc)) (count a')))
+        ; If descriptions of the compared referents are not found or their overlap is empty,
+        ; maximum distance is returned.
+        1))))
+
 (defmethod compute-distance ::xsd/decimal
   [_
    property-ranges
    [{property "@id"} {a "@value"}]
    [_ {b "@value"}]]
   (normalized-numeric-distance (get property-ranges property) a b))
-
-(defn normalized-numeric-distance'
-  "Normalized numeric distance returning maximum distance if parsing either `a` or `b` fails."
-  [property-ranges property parse-fn [a b]]
-  (try
-    (normalized-numeric-distance (get property-ranges property)
-                                 (parse-fn a)
-                                 (parse-fn b))
-    (catch IllegalArgumentException _ 1)))
 
 (defmethod compute-distance ::xsd/date
   [_
@@ -248,8 +278,8 @@
              b' b]
          (distance-fn [a-property a'] [b-property b']))))
 
-(defn get-paths-distance
-  "Get similarity of paths `a` and `b` given the `resolve-fn` that
+(defn get-resources-distance
+  "Get distance of resources `a` and `b` given the `resolve-fn` that
   finds resource description and `property-ranges` lists ranges for the
   properties in data."
   [resolve-fn property-ranges [a b]]
