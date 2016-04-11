@@ -12,7 +12,7 @@
 
 (deftest compute-distance
   (let [distance-fn (partial distance/compute-distance (fn []) {})] ; Mocked distance function
-    (testing "Equivalent resources have distance of 0"
+    (testing "Equivalent resources have no distance."
       (are [resource] (= (distance-fn resource resource) 0)
            {"@value" 1}
            {"@value" "2015-12-30"}
@@ -21,4 +21,10 @@
       (are [a b] (= (distance-fn a b) (distance-fn b a))
            {"@value" 1} {"@value" 3}
            {"@value" "http://example.com/path/to/a/file"} {"@value" "https://example.com/path/to/another/file"}
-           {"@id" "_:b1"} {"@id" "_:b2"}))))
+           {"@id" "_:b1"} {"@id" "_:b2"}))
+    (testing "Mismatching types have maximum distance."
+      (are [a b] (= (distance-fn a b) 1)
+           {"@type" "http://www.w3.org/2001/XMLSchema#decimal"
+            "@value" 1.23}
+           {"@type" "http://purl.org/goodrelations/v1#BusinessEntity"
+            "@id" "_:b1"}))))
