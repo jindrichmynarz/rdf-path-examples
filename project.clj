@@ -17,6 +17,7 @@
                  [yesparql "0.3.0"]
                  [compojure "1.5.0"]
                  [liberator "0.14.1"]
+                 [clj-time "0.11.0"]
                  [joda-time "2.9.3"]
                  [org.clojure/math.combinatorics "0.1.1"]
                  [cheshire "5.6.0"]

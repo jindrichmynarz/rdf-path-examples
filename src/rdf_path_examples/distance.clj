@@ -5,12 +5,12 @@
             [clj-fuzzy.stemmers :refer [porter]]
             [clj-fuzzy.metrics :refer [jaro-winkler]]
             [clojure.string :as string]
+            [clj-time.format :as time-format]
+            [clj-time.coerce :as time-coerce]
             [clojure.tools.logging :as log])
   (:import [de.lmu.ifi.dbs.elki.distance.distancefunction DistanceFunction]
-           [org.joda.time Period]
+           [org.joda.time DateTime Period]
            [clojure.lang PersistentArrayMap PersistentVector]))
-
-; ----- Private functions -----
 
 ; ----- Private functions -----
 
@@ -89,8 +89,20 @@
 (defn normalized-numeric-distance
   "Computes distance between `a` and `b` normalized by `maximum`."
   [maximum a b]
-  (double (/ (Math/abs (- a b))
-             (or maximum 10000))))
+  (if (= a b)
+    0
+    (double (/ (Math/abs (- a b))
+               (or maximum 10000)))))
+
+(defn ^DateTime parse-date
+  "Parse xsd:date `date`."
+  [^String date]
+  (time-format/parse (time-format/formatters :date) date))
+
+(defn date->seconds
+  "Coerce `date` to duration in seconds from Unix time's start."
+  [^String date]
+  (/ (time-coerce/to-long (parse-date date)) 1000))
 
 (defmulti compute-distance
   "Compute distance of resources `a` and `b`. Dispatches on the lowest common ancestor
@@ -105,9 +117,16 @@
    property-ranges
    [{property "@id"} {a "@value"}]
    [_ {b "@value"}]]
-  (if (= a b)
-    0
-    (normalized-numeric-distance (get property-ranges property) a b)))
+  (normalized-numeric-distance (get property-ranges property) a b))
+
+(defmethod compute-distance ::xsd/date
+  [_
+   property-ranges
+   [{property "@id"} {a "@value"}]
+   [_ {b "@value"}]]
+  (normalized-numeric-distance (get property-ranges property)
+                               (date->seconds a)
+                               (date->seconds b)))
 
 (defmethod compute-distance ::xsd/string
   [_ _
@@ -124,9 +143,14 @@
         (jaro-winkler a-str b-str)))))
 
 (defmethod compute-distance :default
-  ; If no type matches, compared resources are treated as dissimilar.
-  [& _]
-  1)
+  ; If no type matches, compared resources are treated as dissimilar,
+  ; unless they are exactly the same.
+  [_ _
+   [_ {a "@value"}]
+   [_ {b "@value"}]]
+  (if (and a b (= a b))
+    0
+    1))
 
 (def compute-distance'
   (memoize compute-distance))
