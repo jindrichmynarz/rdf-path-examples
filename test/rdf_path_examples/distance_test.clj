@@ -11,7 +11,11 @@
        "PT0.5S" (distance/->period :seconds 0.5)))
 
 (deftest compute-distance
-  (let [distance-fn (partial distance/compute-distance (fn []) {})] ; Mocked distance function
+  (let [maximum 10
+        distance-fn (fn [a b] (distance/compute-distance (fn [])
+                                                         {nil maximum}
+                                                         [nil a]
+                                                         [nil b]))] ; Mocked distance function
     (testing "Equivalent resources have no distance."
       (are [resource] (= (distance-fn resource resource) 0)
            {"@value" 1}
@@ -27,4 +31,8 @@
            {"@type" "http://www.w3.org/2001/XMLSchema#decimal"
             "@value" 1.23}
            {"@type" "http://purl.org/goodrelations/v1#BusinessEntity"
-            "@id" "_:b1"}))))
+            "@id" "_:b1"}))
+    (testing "Numeric distance"
+      (are [a b distance] (= (distance-fn a b) distance)
+           {"@value" 0} {"@value" 1} 0.1
+           {"@value" -10} {"@value" 5} 1.5))))

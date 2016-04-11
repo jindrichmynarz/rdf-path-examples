@@ -4,6 +4,7 @@
             [rdf-path-examples.util :refer [duration-regex parse-number]]
             [clj-fuzzy.stemmers :refer [porter]]
             [clj-fuzzy.metrics :refer [jaro-winkler]]
+            [clojure.string :as string]
             [clojure.tools.logging :as log])
   (:import [de.lmu.ifi.dbs.elki.distance.distancefunction DistanceFunction]
            [org.joda.time Period]
@@ -88,29 +89,37 @@
 (defn normalized-numeric-distance
   "Computes distance between `a` and `b` normalized by `maximum`."
   [maximum a b]
-  (/ (Math/abs (- a b))
-     maximum))
+  (double (/ (Math/abs (- a b))
+             (or maximum 10000))))
 
 (defmulti compute-distance
   "Compute distance of resources `a` and `b`. Dispatches on the lowest common ancestor
   of the inferred types of the compared resources."
-  (fn [resolve-fn property-ranges a b]
+  (fn [resolve-fn property-ranges [_ a] [_ b]]
     (let [a-type (infer/infer-type a)
           b-type (infer/infer-type b)]
       (infer/lowest-common-ancestor a-type b-type))))
 
-(defmethod compute-distance ::xsd/string
-  [resolve-fn
+(defmethod compute-distance ::xsd/decimal
+  [_
    property-ranges
-   {a-lang "@language"
-    a-value "@value"}
-   {b-lang "@language"
-    b-value "@value"}]
+   [{property "@id"} {a "@value"}]
+   [_ {b "@value"}]]
+  (if (= a b)
+    0
+    (normalized-numeric-distance (get property-ranges property) a b)))
+
+(defmethod compute-distance ::xsd/string
+  [_ _
+   [_ {a-lang "@language"
+       a-value "@value"}]
+   [_ {b-lang "@language"
+       b-value "@value"}]]
   (let [a-str (str a-value) ; Guard against non-string inputs
         b-str (str b-value)]
     (if (= a-str b-str)
       0
-      (if (every? #{"en"} [a-lang b-lang])
+      (if (every? (every-pred (complement nil?) #(string/starts-with? % "en")) [a-lang b-lang])
         (jaro-winkler (porter a-str) (porter b-str))
         (jaro-winkler a-str b-str)))))
 
@@ -125,7 +134,7 @@
 (defmulti dispatch-distance
   "Dispatches distance computation based on the types of the compared objects.
   There may be either a single object or a collection of objects."
-  (fn [distance-fn a b] (set (map type [a b]))))
+  (fn [distance-fn [_ a] [_ b]] (set (map type [a b]))))
 
 (defmethod dispatch-distance #{PersistentArrayMap}
   ; Comparing single objects.
@@ -136,16 +145,16 @@
   ; Comparing single object and a collection of objects.
   ; Aggregated by maximum.
   [distance-fn a b]
-  (let [[v m] (if (vector? a) [a b] [b a])]
+  (let [[v m] (if (vector? (second a)) [a b] [b a])]
     (max (map (partial distance-fn m) v))))
 
 (defmethod dispatch-distance #{PersistentVector}
   ; Comparing collections of objects.
   ; Computes Cartesian product of similarities and aggregates by maximum.
-  [distance-fn a b]
+  [distance-fn [a-property a] [b-property b]]
   (max (for [a' a
              b' b]
-         (distance-fn a' b'))))
+         (distance-fn [a-property a'] [b-property b']))))
 
 (defn get-paths-distance
   "Get similarity of paths `a` and `b` given the `resolve-fn` that
