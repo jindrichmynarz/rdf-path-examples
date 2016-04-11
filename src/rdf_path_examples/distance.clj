@@ -11,7 +11,19 @@
   (:import [de.lmu.ifi.dbs.elki.distance.distancefunction DistanceFunction]
            [org.joda.time DateTime Period]
            [org.joda.time.format DateTimeFormatter]
-           [clojure.lang PersistentArrayMap PersistentVector]))
+           [clojure.lang PersistentArrayMap PersistentVector]
+           [java.net URI URISyntaxException]))
+
+; ----- Private vars -----
+
+(def ^:private iri-part-weights
+  "Pairs of function and weight to compute similarity of IRIs."
+  [[#(.getHost %) 0.68]
+   [(comp str #(.getPort %)) 0.01]
+   [#(.getFragment %) 0.01]
+   [#(.getPath %) 0.15]
+   [#(.getQuery %) 0.02]
+   [#(.getScheme %) 0.13]])
 
 ; ----- Private functions -----
 
@@ -116,6 +128,12 @@
 (def duration->seconds
   (comp period->seconds parse-duration))
 
+(defn jaro-winkler'
+  "Jaro-Winkler distance between strings `a` and `b`"
+  [^String a
+   ^String b]
+  (- 1 (jaro-winkler a b)))
+
 (defmulti compute-distance
   "Compute distance of resources `a` and `b`. Dispatches on the lowest common ancestor
   of the inferred types of the compared resources."
@@ -161,6 +179,23 @@
    [_ {b "@value"}]]
   (normalized-numeric-distance' property-ranges property duration->seconds [a b]))
 
+(defmethod compute-distance ::xsd/anyURI
+  [_ _
+   [_ {a "@value"}]
+   [_ {b "@value"}]]
+  (try
+    (let [a-iri (URI. a)
+          b-iri (URI. b)]
+      (apply + (map (fn [[f weight]]
+                      (let [a-part (f a-iri)
+                            b-part (f b-iri)]
+                        (if (and a-part a-part)
+                          (* (jaro-winkler' a-part b-part) weight)
+                          0)))
+                    iri-part-weights)))
+    ; Return maximum distance if IRIs are malformed.
+    (catch URISyntaxException _ 1)))
+
 (defmethod compute-distance ::xsd/string
   [_ _
    [_ {a-lang "@language"
@@ -172,8 +207,8 @@
     (if (= a-str b-str)
       0
       (if (every? (every-pred (complement nil?) #(string/starts-with? % "en")) [a-lang b-lang])
-        (jaro-winkler (porter a-str) (porter b-str))
-        (jaro-winkler a-str b-str)))))
+        (jaro-winkler' (porter a-str) (porter b-str))
+        (jaro-winkler' a-str b-str)))))
 
 (defmethod compute-distance :default
   ; If no type matches, compared resources are treated as dissimilar,

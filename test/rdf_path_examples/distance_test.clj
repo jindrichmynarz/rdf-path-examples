@@ -62,4 +62,14 @@
     (testing "Malformed literals have maximum distance."
       (are [a b] (== (distance-fn a b) 1)
            {"@type" (xsd "date") "@value" "2016-04-31"} {"@type" (xsd "date") "@value" "2016-04-30"}
-           {"@type" (xsd "duration") "@value" "BRRAP"} {"@type" (xsd "duration") "@value" "P5Y"}))))
+           {"@type" (xsd "duration") "@value" "BRRAP"} {"@type" (xsd "duration") "@value" "P5Y"}))
+    (testing "Distance between IRIs"
+      (is (> (distance-fn {"@value" "http://localhost:3030"} {"@value" "http://localhos:3030"})
+             (distance-fn {"@value" "http://localhost:3030"} {"@value" "http://localhost:303"}))
+          "Distance between IRIs differing in hostname is greater than between IRIs with different ports."))
+    (testing "Distance between strings"
+      (is (== (distance-fn {"@language" "en" "@value" "Housing"} {"@language" "en" "@value" "Houses"}) 0)
+          "Porter stemmer is applied for strings in English.")
+      (is (> (distance-fn {"@value" "Carl"} {"@value" "Carlito"})
+             (distance-fn {"@value" "Carl"} {"@value" "Carlos"}))
+          "Distance of 3 characters is greater than distance of 2 characters."))))
