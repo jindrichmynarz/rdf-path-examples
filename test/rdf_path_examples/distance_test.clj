@@ -1,7 +1,8 @@
 (ns rdf-path-examples.distance-test
   (:require [rdf-path-examples.distance :as distance]
             [rdf-path-examples.prefixes :refer [xsd]]
-            [clojure.test :refer :all]))
+            [clojure.test :refer :all]
+            [clojure.tools.logging :as log]))
 
 (deftest parse-duration
   (are [s period] (= (distance/parse-duration s) period)
@@ -80,9 +81,17 @@
       (testing "Distance between referents"
         (is (== (distance-fn (fn [_]) referent referent) 0)
             "Comparison by IRI for the same referents returns no distance.")
-        (letfn [(resolve-fn [iri] {"http://example.com/property" {"@value" 0}})]
-          (is (== (distance-fn resolve-fn {"@id" "http://example.com/1"} {"@id" "http://example.com/2"}) 0)
-            "Comparison by value of referents with the same description returns no distance."))))))
+        (letfn [(resolve-fn [_] {"a" {"@value" 0}})]
+          (is (== (distance-fn resolve-fn {"@id" "a"} {"@id" "b"}) 0)
+            "Comparison by value of referents with the same description returns no distance."))
+        (letfn [(resolve-fn [iri] (get {"http://example.com/1" {"a" {"@value" 0}}
+                                        "http://example.com/2" {"a" {"@value" 0}
+                                                                "b" {"@value" 1}}}
+                                       iri))]
+          (is (== (distance-fn resolve-fn
+                               {"@id" "http://example.com/1"}
+                               {"@id" "http://example.com/2"})
+                  0.5)))))))
 
 (deftest map-overlaps
   (is (nil? (distance/map-overlaps {:a 0} {:b 1})) "No overlap")

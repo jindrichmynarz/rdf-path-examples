@@ -173,10 +173,13 @@
     ; Comparison by value
     (let [a-desc (resolve-fn a)
           b-desc (resolve-fn b)
-          distance-fn (partial compute-distance' resolve-fn property-ranges)]
+          distance-fn (partial compute-distance' resolve-fn property-ranges)
+          dispatch-fn (comp (partial - 1) (partial dispatch-distance distance-fn))]
       (if-let [[a' b'] (map-overlaps a-desc b-desc)]
-        (/ (reduce + (map (fn [a'' b''] (dispatch-distance distance-fn a'' b'')) a' b'))
-           (- (+ (count a-desc) (count b-desc)) (count a')))
+        (let [union-size (- (+ (count a-desc) (count b-desc)) (count a'))
+              intersection-size (reduce + (map dispatch-fn a' b'))]
+          (/ (- union-size intersection-size)
+             union-size))
         ; If descriptions of the compared referents are not found or their overlap is empty,
         ; maximum distance is returned.
         1))))
