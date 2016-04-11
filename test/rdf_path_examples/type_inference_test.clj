@@ -7,7 +7,8 @@
 (deftest infer-type-test
   (testing "Matching resources"
     (are [resource resource-type] (= (infer/infer-type resource) resource-type)
-         {"@id" "_:b1234"} :referent
+         {"@id" "_:b1234"} :bnode
+         {"@id" "http://example.com"} :referent
          {"@value" "https://example.com:3030/path/to/resource"} ::xsd/anyURI
          {"@value" "2000-01-01"
           "@type" (prefix/xsd "date")} ::xsd/date

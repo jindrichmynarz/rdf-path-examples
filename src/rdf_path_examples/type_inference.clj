@@ -46,7 +46,7 @@
                 value "@value"
                 resource-type "@type"}]
     (cond id
-          :referent
+          (if (string/starts-with? id "_:") :bnode :referent)
           (and resource-type (xml-schema-data-type? resource-type))
           (data-type->xml-schema resource-type)
           :else (infer-datatype value)))
