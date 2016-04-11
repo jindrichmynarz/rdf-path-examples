@@ -46,7 +46,7 @@
 (defn ^Period parse-duration
   "Parse `duration`"
   [^String duration]
-  (when-let [match (re-matches duration-regex duration)]
+  (if-let [match (re-matches duration-regex duration)]
     (let [change-fn (if (= (first duration) \-) - +)
           [years months days hours minutes seconds] (map (comp change-fn
                                                                (fnil identity 0) ; Guard for nils
@@ -60,7 +60,8 @@
                 :days days
                 :hours hours
                 :minutes minutes
-                :seconds seconds))))
+                :seconds seconds))
+    (throw (IllegalArgumentException. (str "Malformed xsd:duration " duration ".")))))
 
 (defn period->seconds
   "Convert `period` to an approximate number of `seconds`."
@@ -112,6 +113,9 @@
   [^String date-time]
   (coerce-to-seconds date-time (time-format/formatters :date-time)))
 
+(def duration->seconds
+  (comp period->seconds parse-duration))
+
 (defmulti compute-distance
   "Compute distance of resources `a` and `b`. Dispatches on the lowest common ancestor
   of the inferred types of the compared resources."
@@ -127,23 +131,35 @@
    [_ {b "@value"}]]
   (normalized-numeric-distance (get property-ranges property) a b))
 
+(defn normalized-numeric-distance'
+  "Normalized numeric distance returning maximum distance if parsing either `a` or `b` fails."
+  [property-ranges property parse-fn [a b]]
+  (try
+    (normalized-numeric-distance (get property-ranges property)
+                                 (parse-fn a)
+                                 (parse-fn b))
+    (catch IllegalArgumentException _ 1)))
+
 (defmethod compute-distance ::xsd/date
   [_
    property-ranges
    [{property "@id"} {a "@value"}]
    [_ {b "@value"}]]
-  (normalized-numeric-distance (get property-ranges property)
-                               (date->seconds a)
-                               (date->seconds b)))
+  (normalized-numeric-distance' property-ranges property date->seconds [a b]))
 
 (defmethod compute-distance ::xsd/dateTime
   [_
    property-ranges
    [{property "@id"} {a "@value"}]
    [_ {b "@value"}]]
-  (normalized-numeric-distance (get property-ranges property)
-                               (date-time->seconds a)
-                               (date-time->seconds b)))
+  (normalized-numeric-distance' property-ranges property date-time->seconds [a b]))
+
+(defmethod compute-distance ::xsd/duration
+  [_
+   property-ranges
+   [{property "@id"} {a "@value"}]
+   [_ {b "@value"}]]
+  (normalized-numeric-distance' property-ranges property duration->seconds [a b]))
 
 (defmethod compute-distance ::xsd/string
   [_ _

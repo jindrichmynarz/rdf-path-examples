@@ -1,5 +1,6 @@
 (ns rdf-path-examples.distance-test
   (:require [rdf-path-examples.distance :as distance]
+            [rdf-path-examples.prefixes :refer [xsd]]
             [clojure.test :refer :all]))
 
 (deftest parse-duration
@@ -8,11 +9,15 @@
        "P2000Y5M30D" (distance/->period :years 2000 :months 5 :days 30)
        "-P120D" (distance/->period :days -120)
        "P1Y2MT2H" (distance/->period :years 1 :months 2 :hours 2)
-       "PT0.5S" (distance/->period :seconds 0.5)))
+       "PT0.5S" (distance/->period :seconds 0.5))
+  (is (thrown? IllegalArgumentException (distance/parse-duration ""))
+      "Parsing malformed duration throws an exception."))
 
 (deftest date->seconds
-  (testing "Dates are casted to seconds from the Unix time's start."
-    (is (zero? (distance/date->seconds "1970-01-01")))))
+  (is (zero? (distance/date->seconds "1970-01-01"))
+      "Dates are casted to seconds from the Unix time's start.")
+  (is (thrown? IllegalArgumentException (distance/date->seconds ""))
+      "Parsing malformed dates throws an exception."))
 
 (deftest compute-distance
   (let [maximum 10 ; Fixed maximum range for all properties
@@ -32,7 +37,7 @@
            {"@id" "_:b1"} {"@id" "_:b2"}))
     (testing "Mismatching types have maximum distance."
       (are [a b] (== (distance-fn a b) 1)
-           {"@type" "http://www.w3.org/2001/XMLSchema#decimal"
+           {"@type" (xsd "decimal")
             "@value" 1.23}
            {"@type" "http://purl.org/goodrelations/v1#BusinessEntity"
             "@id" "_:b1"}))
@@ -50,4 +55,8 @@
            {"@value" "2014-01-01"} {"@value" "2015-01-01"}
            ; A minutes difference
            {"@value" "2015-01-01T12:00:00.000Z"} {"@value" "2015-01-01T12:01:00.000Z"}
-           {"@value" "2015-01-01T12:01:00.000Z"} {"@value" "2015-01-01T12:02:00.000Z"}))))
+           {"@value" "2015-01-01T12:01:00.000Z"} {"@value" "2015-01-01T12:02:00.000Z"}))
+    (testing "Malformed literals have maximum distance."
+      (are [a b] (== (distance-fn a b) 1)
+           {"@type" (xsd "date") "@value" "2016-04-31"} {"@type" (xsd "date") "@value" "2016-04-30"}
+           {"@type" (xsd "duration") "@value" "BRRAP"} {"@type" (xsd "duration") "@value" "P5Y"}))))
