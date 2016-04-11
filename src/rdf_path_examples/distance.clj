@@ -10,6 +10,7 @@
             [clojure.tools.logging :as log])
   (:import [de.lmu.ifi.dbs.elki.distance.distancefunction DistanceFunction]
            [org.joda.time DateTime Period]
+           [org.joda.time.format DateTimeFormatter]
            [clojure.lang PersistentArrayMap PersistentVector]))
 
 ; ----- Private functions -----
@@ -94,15 +95,22 @@
     (double (/ (Math/abs (- a b))
                (or maximum 10000)))))
 
-(defn ^DateTime parse-date
-  "Parse xsd:date `date`."
-  [^String date]
-  (time-format/parse (time-format/formatters :date) date))
+(defn coerce-to-seconds
+  "Coerce string `s` to seconds from Unix time's start.
+  `s` must match the format expected by the `parser`."
+  [^String s
+   ^DateTimeFormatter parser]
+  (/ (time-coerce/to-long (time-format/parse parser s)) 1000))
 
 (defn date->seconds
   "Coerce `date` to duration in seconds from Unix time's start."
   [^String date]
-  (/ (time-coerce/to-long (parse-date date)) 1000))
+  (coerce-to-seconds date (time-format/formatters :date)))
+
+(defn date-time->seconds
+  "Coerce `date-time` to duration in seconds from Unix time's start."
+  [^String date-time]
+  (coerce-to-seconds date-time (time-format/formatters :date-time)))
 
 (defmulti compute-distance
   "Compute distance of resources `a` and `b`. Dispatches on the lowest common ancestor
@@ -127,6 +135,15 @@
   (normalized-numeric-distance (get property-ranges property)
                                (date->seconds a)
                                (date->seconds b)))
+
+(defmethod compute-distance ::xsd/dateTime
+  [_
+   property-ranges
+   [{property "@id"} {a "@value"}]
+   [_ {b "@value"}]]
+  (normalized-numeric-distance (get property-ranges property)
+                               (date-time->seconds a)
+                               (date-time->seconds b)))
 
 (defmethod compute-distance ::xsd/string
   [_ _
