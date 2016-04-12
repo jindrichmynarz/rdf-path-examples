@@ -8,9 +8,11 @@
             [clojure.tools.logging :as log]
             [clojure.set :refer [union]]
             [yesparql.sparql :refer [model->json-ld]]
-            [clojure.math.combinatorics :refer [combinations]])
+            [clojure.math.combinatorics :refer [combinations]]
+            [clojure.pprint :refer [pprint]])
   (:import [org.apache.jena.rdf.model Model]
-           [com.github.jsonldjava.utils JsonUtils]))
+           [com.github.jsonldjava.utils JsonUtils]
+           [clojure.lang PersistentVector]))
 
 (defonce example-context
   (json-ld/load-context "example.jsonld"))
@@ -41,12 +43,12 @@
   [^Model path]
   (let [results (select-query path extract-path-query)
         path (map-indexed (fn [index {:keys [start edgeProperty end isEndDatatype]}]
-                            {:start {:first (zero? index) 
-                                     :type start
+                            {:start {:first (zero? index)
+                                     :type (get start "@id")
                                      :varname (str "e" index)}
-                             :edgeProperty edgeProperty
-                             :end {:datatype isEndDatatype
-                                   :type end
+                             :edgeProperty (get edgeProperty "@id")
+                             :end {:datatype (get isEndDatatype "@value")
+                                   :type (get end "@id")
                                    :varname (str "e" (inc index))}})
                           results)]
     {:path path
@@ -67,27 +69,32 @@
 (defn extract-examples
   "Extract paths from `examples`."
   [^Model examples]
-  (into {} (map (juxt key (comp dedupe
+  (into {} (map (juxt key (comp (partial partition 2) ; Partition into [property node] pairs
+                                #(conj % nil) ; Prepend nil before the first node
+                                dedupe ; Collapse equal start and end nodes
                                 (partial apply concat)
-                                (partial map (juxt :start :end))
+                                (partial map (juxt :start :property :end))
                                 val))
-                (group-by :path (select-query examples extract-examples-query)))))
+                (group-by (comp #(get % "@id") :path)
+                          (select-query examples extract-examples-query)))))
 
 (defn extract-path-nodes
   "Extract path nodes from `examples`."
   [^Model examples]
-  (map :node (select-query examples extract-path-nodes-query)))
+  (map (comp #(get % "@id") :node) (select-query examples extract-path-nodes-query)))
 
 (defn extract-datatype-property-ranges
   "Extracts ranges of datatype properties from `examples`."
   [^Model examples]
   (into {}
         (for [{:keys [property
-                      propertyRange
-                      datatype]} (select-query examples extract-datatype-property-ranges-query)]
-          [property (distance/ordinal->number datatype propertyRange)])))
+                      propertyRange]} (select-query examples extract-datatype-property-ranges-query)]
+          (try
+            [(get property "@id")
+             (distance/ordinal->number propertyRange)]
+            (catch IllegalArgumentException _ nil)))))
 
-(defn ^Model retrieve-path-data
+(defn retrieve-path-data
   "Retrieve data describing `path-nodes`."
   [path-nodes
    {:keys [graph-iri sparql-endpoint]}]
@@ -95,6 +102,24 @@
                            {:graph-iri graph-iri
                             :nodes path-nodes})]
     (construct-query sparql-endpoint query)))
+
+(defn- wrap-types
+  "Wraps types of `resource` in array maps"
+  [resource]
+  (if (contains? resource "@type")
+    (update resource "@type" (partial mapv (partial array-map "@id")))
+    resource))
+
+(defn find-by-iri
+  "Find description of resource identified by `iri` in `json-ld` data."
+  [^PersistentVector json-ld
+   ^String iri]
+  (if-let [matches (filter (comp (partial = iri) #(get % "@id")) json-ld)]
+    (-> matches
+        first
+        (dissoc "@id") ; Remove string @id
+        wrap-types)
+    {}))
 
 (defn serialize-examples
   "Serialize path `examples` into JSON-LD Clojure hash-map"
@@ -123,9 +148,17 @@
                                     (update params :limit (partial * sampling-factor)))
         path-map (extract-examples examples)
         path-data (retrieve-path-data (extract-path-nodes examples) params)
+        path-json-ld (json-ld/expand-model path-data)
+        resolve-fn (partial find-by-iri path-json-ld)
         datatype-property-ranges (extract-datatype-property-ranges path-data)
-        path-distances (into {} (map (juxt set distance/compute-distance)
-                                     (combinations path-map 2)))]))
+        path-distances (into {}
+                             (pmap (juxt (comp set keys)
+                                         (comp (partial distance/get-resources-distance
+                                                        resolve-fn
+                                                        datatype-property-ranges)
+                                               vals))
+                                   (combinations path-map 2)))]
+    {}))
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sampling-factor sparql-endpoint]}
