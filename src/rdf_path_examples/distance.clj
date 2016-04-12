@@ -177,7 +177,7 @@
           dispatch-fn (comp (partial - 1) (partial dispatch-distance distance-fn))]
       (if-let [[a' b'] (map-overlaps a-desc b-desc)]
         (let [union-size (- (+ (count a-desc) (count b-desc)) (count a'))
-              intersection-size (reduce + (map dispatch-fn a' b'))]
+              intersection-size (reduce + (pmap dispatch-fn a' b'))]
           (/ (- union-size intersection-size)
              union-size))
         ; If descriptions of the compared referents are not found or their overlap is empty,
@@ -268,18 +268,18 @@
 
 (defmethod dispatch-distance #{PersistentArrayMap PersistentVector}
   ; Comparing single object and a collection of objects.
-  ; Aggregated by maximum.
+  ; Aggregated by minimum.
   [distance-fn a b]
-  (let [[v m] (if (vector? (second a)) [a b] [b a])]
-    (max (map (partial distance-fn m) v))))
+  (let [[[property v] m] (if (vector? (second a)) [a b] [b a])]
+    (apply min (map (comp (partial distance-fn m) (partial vector property)) v))))
 
 (defmethod dispatch-distance #{PersistentVector}
   ; Comparing collections of objects.
-  ; Computes Cartesian product of similarities and aggregates by maximum.
+  ; Computes Cartesian product of similarities and aggregates by minimum.
   [distance-fn [a-property a] [b-property b]]
-  (max (for [a' a
-             b' b]
-         (distance-fn [a-property a'] [b-property b']))))
+  (apply min (for [a' a
+                   b' b]
+               (distance-fn [a-property a'] [b-property b']))))
 
 (defn get-resources-distance
   "Get distance of resources `a` and `b` given the `resolve-fn` that
@@ -288,7 +288,7 @@
   [resolve-fn property-ranges [a b]]
   (let [distance-fn (partial compute-distance' resolve-fn property-ranges)
         dispatch-fn (partial dispatch-distance distance-fn)]
-    (average (map dispatch-fn a b))))
+    (average (pmap dispatch-fn a b))))
 
 (def distance-function
   (reify DistanceFunction
