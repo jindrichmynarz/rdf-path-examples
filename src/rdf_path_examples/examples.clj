@@ -2,13 +2,14 @@
   (:require [rdf-path-examples.sparql :refer [construct-query select-query]]
             [rdf-path-examples.json-ld :as json-ld]
             [rdf-path-examples.distance :as distance]
+            [rdf-path-examples.diversification :refer [greedy-construction]]
             [rdf-path-examples.util :refer [resource->string]]
             [stencil.core :refer [render-file]]
             [clojure.java.io :as io]
-            [clojure.tools.logging :as log]
             [clojure.set :refer [union]]
             [yesparql.sparql :refer [model->json-ld]]
             [clojure.math.combinatorics :refer [combinations]]
+            [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]])
   (:import [org.apache.jena.rdf.model Model]
            [com.github.jsonldjava.utils JsonUtils]
@@ -121,6 +122,17 @@
         wrap-types)
     {}))
 
+(defn path-distances
+  "Materialize distances between paths in `path-map`.
+  Nested resources are looked up using `resolve-fn`.
+  `datatype-property-ranges` is a map of ranges of datatype properties."
+  [path-map resolve-fn datatype-property-ranges]
+  (let [distance-fn (partial distance/get-resources-distance resolve-fn datatype-property-ranges)]
+    (->> (combinations path-map 2) ; Generate a lazy sequence of all pairs of paths.
+         (pmap (juxt (comp set keys) ; Index the results by sets of path IDs
+                     (comp distance-fn vals)))
+         (into {}))))
+
 (defn serialize-examples
   "Serialize path `examples` into JSON-LD Clojure hash-map"
   [^Model examples]
@@ -151,13 +163,7 @@
         path-json-ld (json-ld/expand-model path-data)
         resolve-fn (partial find-by-iri path-json-ld)
         datatype-property-ranges (extract-datatype-property-ranges path-data)
-        path-distances (into {}
-                             (pmap (juxt (comp set keys)
-                                         (comp (partial distance/get-resources-distance
-                                                        resolve-fn
-                                                        datatype-property-ranges)
-                                               vals))
-                                   (combinations path-map 2)))]
+        distances (path-distances path-map resolve-fn datatype-property-ranges)]
     {}))
 
 (defmethod generate-examples "representative"
