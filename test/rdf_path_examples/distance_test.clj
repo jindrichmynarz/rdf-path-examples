@@ -2,6 +2,9 @@
   (:require [rdf-path-examples.distance :as distance]
             [rdf-path-examples.prefixes :refer [xsd]]
             [clojure.test :refer :all]
+            [clojure.test.check.generators :as gen]
+            [clojure.test.check.properties :as prop]
+            [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.tools.logging :as log]))
 
 (def ^:private maximum-range
@@ -112,5 +115,12 @@
 (deftest map-overlaps
   (is (nil? (distance/map-overlaps {:a 0} {:b 1})) "No overlap")
   (is (= (distance/map-overlaps {:a 0 :b 1 :c 4} {:b 2 :c 3})
-         [[[:b 1] [:c 4]]
-          [[:b 2] [:c 3]]])))
+         [[[{"@id" :b} 1] [{"@id" :c} 4]]
+          [[{"@id" :b} 2] [{"@id" :c} 3]]])))
+
+(defspec maximum-estimation-no-overflow
+  ; Estimated maximum must be greater than the normalized numbers 
+  100
+  (prop/for-all [[a b] (gen/list-distinct (gen/double* {:infinite? false :NaN? false}) {:num-elements 2})]
+                (let [estimate (distance/estimate-maximum a b)]
+                  (and (<= a estimate) (<= b estimate)))))

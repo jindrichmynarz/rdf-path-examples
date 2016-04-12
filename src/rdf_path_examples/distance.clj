@@ -110,13 +110,21 @@
     n
     (parse-number n)))
 
+(defn estimate-maximum
+  "Estimate maximum based on numbers`a` and `b`.
+  Maximum is estimated as the closest greater power of 10."
+  [a b]
+  (Math/pow 10 (Math/ceil (Math/log10 (max (Math/abs a) (Math/abs b))))))
+
 (defn normalized-numeric-distance
   "Computes distance between `a` and `b` normalized by `maximum`."
   [maximum a b]
   (if (= a b)
     0
-    (double (/ (Math/abs (- (parse-number' a) (parse-number' b)))
-               (or maximum 10000)))))
+    (let [a' (parse-number' a) ; Make sure we have numbers
+          b' (parse-number' b)]
+      (double (/ (Math/abs (- a' b'))
+                 (or maximum (estimate-maximum a' b')))))))
 
 (defn normalized-numeric-distance'
   "Normalized numeric distance returning maximum distance if parsing either `a` or `b` fails."
@@ -158,7 +166,8 @@
   [^PersistentArrayMap a
    ^PersistentArrayMap b]
   (when-let [matching-properties (seq (sort (apply intersection (map (comp set keys) [a b]))))]
-    (mapv #(mapv vec (select-keys % matching-properties))
+    (mapv #(mapv (juxt (comp (partial array-map "@id") key) val) ; Wrap properties in {"@id" property-iri}
+                 (select-keys % matching-properties))
           [a b])))
 
 (defmulti compute-distance
