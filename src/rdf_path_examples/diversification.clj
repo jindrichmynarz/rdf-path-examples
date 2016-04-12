@@ -15,7 +15,7 @@
         [solutions] (reduce max-distance (filter (comp #(contains? % start) key) distances))
         aggregated-distance (fn [solutions candidate]
                               [candidate
-                               (transduce (map (comp distances (partial set candidate))) + solutions)])
+                               (transduce (map (comp distances (partial hash-set candidate))) + solutions)])
         generate-solution (fn [candidates solutions]
                             (first (reduce max-distance
                                            (map (partial aggregated-distance solutions) candidates))))]
