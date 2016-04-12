@@ -103,12 +103,19 @@
   [{literal "@value"}]
   literal)
 
+(defn- parse-number'
+  "Parse `n` as number if not a number already."
+  [n]
+  (if (number? n)
+    n
+    (parse-number n)))
+
 (defn normalized-numeric-distance
   "Computes distance between `a` and `b` normalized by `maximum`."
   [maximum a b]
   (if (= a b)
     0
-    (double (/ (Math/abs (- a b))
+    (double (/ (Math/abs (- (parse-number' a) (parse-number' b)))
                (or maximum 10000)))))
 
 (defn normalized-numeric-distance'
@@ -177,7 +184,7 @@
           dispatch-fn (comp (partial - 1) (partial dispatch-distance distance-fn))]
       (if-let [[a' b'] (map-overlaps a-desc b-desc)]
         (let [union-size (- (+ (count a-desc) (count b-desc)) (count a'))
-              intersection-size (reduce + (pmap dispatch-fn a' b'))]
+              intersection-size (reduce + (map dispatch-fn a' b'))]
           (/ (- union-size intersection-size)
              union-size))
         ; If descriptions of the compared referents are not found or their overlap is empty,
@@ -288,7 +295,7 @@
   [resolve-fn property-ranges [a b]]
   (let [distance-fn (partial compute-distance' resolve-fn property-ranges)
         dispatch-fn (partial dispatch-distance distance-fn)]
-    (average (pmap dispatch-fn a b))))
+    (average (map dispatch-fn a b))))
 
 (def distance-function
   (reify DistanceFunction
