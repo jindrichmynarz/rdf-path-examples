@@ -9,7 +9,7 @@ PREFIX :     <https://w3id.org/lodsight/rdf-path#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {
-  [] a :Path ;
+  ?path a :Path ;
     :edges (
       {{#path}}
         [
@@ -28,7 +28,7 @@ CONSTRUCT {
 }
 WHERE {
   {
-    SELECT DISTINCT {{#vars}} ?{{varname}} {{/vars}}
+    SELECT DISTINCT ?path {{#vars}} ?{{varname}} {{/vars}}
     WHERE {
       {{#graph-iri}}
       GRAPH <{{{graph-iri}}}> {
@@ -48,6 +48,7 @@ WHERE {
           ?{{end.varname}} a <{{{end.type}}}> .
           {{/end.datatype}}
         {{/path}}
+        BIND (IRI(CONCAT("https://w3id.org/lodsight/rdf-path/", STRUUID())) AS ?path)
       {{#graph-iri}}
       }
       {{/graph-iri}}
