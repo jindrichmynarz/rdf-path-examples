@@ -68,6 +68,15 @@
                                   :limit limit))]
     (construct-query sparql-endpoint query)))
 
+(defn ^Model retrieve-sample-examples
+  "Retrieve sample examples of `path` using `sampling-factor`."
+  [{:keys [sampling-factor]
+    :as params}
+   path]
+  (retrieve-examples path
+                     "sparql/templates/sample_paths.mustache"
+                     (update params :limit (partial * sampling-factor))))
+
 (defn extract-examples
   "Extract paths from `examples`."
   [^Model examples]
@@ -170,11 +179,9 @@
   (serialize-examples (retrieve-examples path "sparql/templates/random.mustache" params)))
 
 (defmethod generate-examples "distinct"
-  [{:keys [limit sampling-factor] :as params}
+  [{:keys [limit] :as params}
    ^Model path]
-  (let [examples (retrieve-examples path
-                                    "sparql/templates/distinct.mustache"
-                                    (update params :limit (partial * sampling-factor)))
+  (let [examples (retrieve-sample-examples params path)
         path-map (extract-examples examples)
         path-data (retrieve-path-data (extract-path-nodes examples) params)
         path-json-ld (json-ld/expand-model path-data)
@@ -187,4 +194,5 @@
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sampling-factor sparql-endpoint]}
-   ^Model path])
+   ^Model path]
+  (let []))

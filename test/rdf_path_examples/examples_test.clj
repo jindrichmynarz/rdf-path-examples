@@ -90,6 +90,6 @@
   (testing "Random selection generates a syntatically valid SPARQL query."
     (is (valid-template? "sparql/templates/random.mustache"))))
 
-(deftest distinct-selection
-  (testing "Distinct selection generates a syntactically valid SPARQL query."
-    (is (valid-template? "sparql/templates/distinct.mustache"))))
+(deftest retrieve-sample-examples
+  (testing "Sample paths retrieval generates a syntactically valid SPARQL query."
+    (is (valid-template? "sparql/templates/sample_paths.mustache"))))
