@@ -143,6 +143,17 @@
                      (comp distance-fn vals)))
          (into {}))))
 
+(defn compute-distances
+  "Compute distances between `examples` navigating via `path-map` and using `path-data`
+  with data about path nodes."
+  [^Model examples
+   path-map
+   ^Model path-data]
+  (let [path-json-ld (json-ld/expand-model path-data)
+        resolve-fn (partial find-by-iri path-json-ld)
+        datatype-property-ranges (extract-datatype-property-ranges path-data)]
+    (path-distances path-map resolve-fn datatype-property-ranges)))
+
 (defn describe-paths
   "Retrieve representations of paths identified by `path-iris` from `data`."
   [^Model data
@@ -184,10 +195,7 @@
   (let [examples (retrieve-sample-examples params path)
         path-map (extract-examples examples)
         path-data (retrieve-path-data (extract-path-nodes examples) params)
-        path-json-ld (json-ld/expand-model path-data)
-        resolve-fn (partial find-by-iri path-json-ld)
-        datatype-property-ranges (extract-datatype-property-ranges path-data)
-        distances (path-distances path-map resolve-fn datatype-property-ranges)
+        distances (compute-distances examples path-map path-data)
         chosen-path-iris (vec (greedy-construction (set (keys path-map)) distances limit))
         chosen-paths (retrieve-chosen-paths (.union examples path-data) chosen-path-iris)]
     (serialize-examples chosen-paths)))
