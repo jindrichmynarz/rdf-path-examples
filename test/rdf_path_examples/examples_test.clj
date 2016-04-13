@@ -36,6 +36,14 @@
                                   :limit (:limit configuration)))]
     (valid-sparql-query? query)))
 
+(defn- generate-path-iris
+  "Generates random path IRIs."
+  []
+  (-> (gen/fmap (partial str "https://w3id.org/lodsight/rdf-path/") gen/uuid)
+      (gen/list-distinct {:num-elements (inc (rand-int 10))})
+      (gen/sample 1)
+      first))
+
 (deftest preprocess-path
   (is (valid-sparql-query? (util/resource->string "sparql/extract_path.rq"))
       "SPARQL query for extracting paths is syntactically valid.")
@@ -68,12 +76,13 @@
          "date_ranges.ttl" 938908800
          "decimal_ranges.ttl" 949.56)))
 
+(deftest describe-paths
+  (let [query (render-file "sparql/templates/describe_paths.mustache" {:paths (generate-path-iris)})]
+    (is (valid-sparql-query? query)
+        "SPARQL query for retrieving path descriptions is syntactically valid.")))
+
 (deftest retrieve-chosen-paths
-  (let [paths (-> (gen/fmap (partial str "https://w3id.org/lodsight/rdf-path/") gen/uuid)
-                  (gen/list-distinct {:num-elements (inc (rand-int 10))})
-                  (gen/sample 1)
-                  first)
-        query (render-file "sparql/templates/path_node_labels.mustache" {:paths paths})]
+  (let [query (render-file "sparql/templates/path_node_labels.mustache" {:paths (generate-path-iris)})]
     (is (valid-sparql-query? query)
         "SPARQL query for extracting node labels is syntactically valid.")))
 
