@@ -90,6 +90,13 @@
   (with-open [qexec (QueryExecutionFactory/sparqlService endpoint query)]
     (.execConstruct qexec)))
 
+(defn ^Model describe-query
+  "Execute SPARQL DESCRIBE `query` on local RDF `model`."
+  [^Model model
+   ^String query]
+  (with-open [qexec (QueryExecutionFactory/create query model)]
+    (.execDescribe qexec)))
+
 (defmulti select-query
   "Execute SPARQL SELECT `query` on `datasource`." 
   (fn [datasource query] (type datasource)))
