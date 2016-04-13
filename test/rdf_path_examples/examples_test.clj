@@ -4,9 +4,10 @@
             [rdf-path-examples.util :as util]
             [rdf-path-examples.sparql :as sparql]
             [stencil.core :refer [render-file]]
-            [clojure.tools.logging :as log]
             [clojure.test :refer :all]
-            [clojure.java.io :as io])
+            [clojure.test.check.generators :as gen]
+            [clojure.java.io :as io]
+            [clojure.tools.logging :as log])
   (:import [org.apache.jena.query QueryFactory QueryParseException]))
 
 (def valid-path (rdf/json-ld->rdf-model (util/resource->input-stream "valid_path.jsonld")))
@@ -67,9 +68,14 @@
          "date_ranges.ttl" 938908800
          "decimal_ranges.ttl" 949.56)))
 
-(deftest extract-examples
-  (let [random-examples (rdf/json-ld->rdf-model (util/resource->input-stream "random_examples.jsonld"))
-        examples-map (examples/extract-examples random-examples)]))
+(deftest retrieve-chosen-paths
+  (let [paths (-> (gen/fmap (partial str "https://w3id.org/lodsight/rdf-path/") gen/uuid)
+                  (gen/list-distinct {:num-elements (inc (rand-int 10))})
+                  (gen/sample 1)
+                  first)
+        query (render-file "sparql/templates/path_node_labels.mustache" {:paths paths})]
+    (is (valid-sparql-query? query)
+        "SPARQL query for extracting node labels is syntactically valid.")))
 
 (deftest random-selection
   (testing "Random selection generates a syntatically valid SPARQL query."
