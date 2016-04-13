@@ -1,0 +1,12 @@
+{{!
+@param Array<IRI> paths
+}}
+
+DESCRIBE ?path
+WHERE {
+  VALUES ?path {
+    {{#paths}}
+    <{{{.}}}>
+    {{/paths}}
+  }
+}

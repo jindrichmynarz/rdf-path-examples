@@ -1,5 +1,5 @@
 (ns rdf-path-examples.examples
-  (:require [rdf-path-examples.sparql :refer [construct-query select-query]]
+  (:require [rdf-path-examples.sparql :refer [construct-query describe-query select-query]]
             [rdf-path-examples.json-ld :as json-ld]
             [rdf-path-examples.distance :as distance]
             [rdf-path-examples.diversification :refer [greedy-construction]]
@@ -8,6 +8,7 @@
             [clojure.java.io :as io]
             [clojure.set :refer [union]]
             [yesparql.sparql :refer [model->json-ld]]
+            [cheshire.core :as json]
             [clojure.math.combinatorics :refer [combinations]]
             [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]])
@@ -133,15 +134,31 @@
                      (comp distance-fn vals)))
          (into {}))))
 
+(defn describe-paths
+  "Retrieve representations of paths identified by `path-iris` from `data`."
+  [^Model data
+   path-iris]
+  (let [query (render-file "sparql/templates/describe_paths.mustache" {:paths path-iris})]
+    (describe-query data query)))
+
+(defn retrieve-chosen-paths
+  "Retrieve chosen path examples identified by `path-iris` from `data`."
+  [^Model data
+   path-iris]
+  (let [query (render-file "sparql/templates/path_node_labels.mustache" {:paths path-iris})]
+    (.union (describe-paths data path-iris) (construct-query data query))))
+
 (defn serialize-examples
-  "Serialize path `examples` into JSON-LD Clojure hash-map"
+  "Serialize path `examples` into JSON-LD Clojure hash-map."
   [^Model examples]
   (if (.isEmpty examples)
     {}
-    (into {} (-> examples
-                 model->json-ld
-                 JsonUtils/fromString
-                 (json-ld/compact example-context)))))
+    (-> examples
+        model->json-ld
+        JsonUtils/fromString
+        (json-ld/compact example-context)
+        JsonUtils/toString
+        json/parse-string)))
 
 (defmulti generate-examples
   "Generate examples of RDF paths using the chosen selection method."
@@ -153,7 +170,7 @@
   (serialize-examples (retrieve-examples path "sparql/templates/random.mustache" params)))
 
 (defmethod generate-examples "distinct"
-  [{:keys [sampling-factor] :as params}
+  [{:keys [limit sampling-factor] :as params}
    ^Model path]
   (let [examples (retrieve-examples path
                                     "sparql/templates/distinct.mustache"
@@ -163,8 +180,10 @@
         path-json-ld (json-ld/expand-model path-data)
         resolve-fn (partial find-by-iri path-json-ld)
         datatype-property-ranges (extract-datatype-property-ranges path-data)
-        distances (path-distances path-map resolve-fn datatype-property-ranges)]
-    {}))
+        distances (path-distances path-map resolve-fn datatype-property-ranges)
+        chosen-path-iris (vec (greedy-construction (set (keys path-map)) distances limit))
+        chosen-paths (retrieve-chosen-paths (.union examples path-data) chosen-path-iris)]
+    (serialize-examples chosen-paths)))
 
 (defmethod generate-examples "representative"
   [{:keys [graph-iri limit sampling-factor sparql-endpoint]}

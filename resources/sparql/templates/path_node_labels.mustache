@@ -1,0 +1,34 @@
+{{!
+@param Array<IRI> paths
+}}
+
+PREFIX :      <https://w3id.org/lodsight/rdf-path#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+
+CONSTRUCT {
+  ?node rdfs:label ?label .
+}
+WHERE {
+  {
+    SELECT DISTINCT ?edge
+    WHERE {
+      VALUES ?path {
+        {{#paths}}
+        <{{{.}}}>
+        {{/paths}}
+      }
+      ?path a :Path ;
+        :edges/rdf:rest*/rdf:first ?edge .
+    }
+  }
+  {
+    ?edge :start ?node .
+  } UNION {
+    ?edge :end ?node .
+  }
+  FILTER (!isLiteral(?node))
+  OPTIONAL {
+    ?node rdfs:label ?label .
+  }
+}
