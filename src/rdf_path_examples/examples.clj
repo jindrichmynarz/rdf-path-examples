@@ -196,11 +196,17 @@
         path-map (extract-examples examples)
         path-data (retrieve-path-data (extract-path-nodes examples) params)
         distances (compute-distances examples path-map path-data)
-        chosen-path-iris (vec (greedy-construction (set (keys path-map)) distances limit))
+        distance-fn (fn [a b] (get distances (hash-set a b)))
+        chosen-path-iris (vec (greedy-construction (set (keys path-map)) distance-fn limit))
         chosen-paths (retrieve-chosen-paths (.union examples path-data) chosen-path-iris)]
     (serialize-examples chosen-paths)))
 
 (defmethod generate-examples "representative"
-  [{:keys [graph-iri limit sampling-factor sparql-endpoint]}
+  [{:keys [limit] :as params}
    ^Model path]
-  (let []))
+  (let [examples (retrieve-sample-examples params path)
+        path-map (extract-examples examples)
+        path-data (retrieve-path-data (extract-path-nodes examples) params)
+        distances (compute-distances examples path-map path-data)
+        distance-fn (fn [a b] (get distances (hash-set a b)))
+        chosen-path-iris []]))

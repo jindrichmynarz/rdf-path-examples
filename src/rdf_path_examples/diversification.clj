@@ -1,23 +1,21 @@
-(ns rdf-path-examples.diversification)
-
-(def ^:private max-distance
-  "Select path with maximum distance.
-  Arguments are vectors, where the second item is the distance."
-  (partial max-key second))
+(ns rdf-path-examples.diversification
+  (:import [clojure.lang PersistentHashSet]))
 
 (defn greedy-construction
-  "Select `n` most diverse `paths` using `distances` between them
-  based on the greedy construction heuristic."
-  [paths
-   distances
+  "Select `n` most diverse `paths` using `distance-fn` that return distance between 2 paths.
+  This approach is based on the greedy construction heuristic."
+  [^PersistentHashSet paths
+   distance-fn
    ^Number n]
   (let [start (rand-nth (vec paths)) ; Randomly select 1 path.
-        [solutions] (reduce max-distance (filter (comp #(contains? % start) key) distances))
+        solutions #{start
+                    (reduce (partial max-key (partial distance-fn start))
+                            (disj paths start))}
         aggregated-distance (fn [solutions candidate]
                               [candidate
-                               (transduce (map (comp distances (partial hash-set candidate))) + solutions)])
+                               (transduce (map (partial distance-fn candidate)) + solutions)])
         generate-solution (fn [candidates solutions]
-                            (first (reduce max-distance
+                            (first (reduce (partial max-key second)
                                            (map (partial aggregated-distance solutions) candidates))))]
     (loop [solutions solutions
            candidates (apply disj paths solutions)
