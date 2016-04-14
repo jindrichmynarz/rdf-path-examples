@@ -3,6 +3,7 @@
             [rdf-path-examples.json-ld :as json-ld]
             [rdf-path-examples.distance :as distance]
             [rdf-path-examples.diversification :refer [greedy-construction]]
+            [rdf-path-examples.clustering :refer [select-k-medoids]]
             [rdf-path-examples.util :refer [resource->string]]
             [stencil.core :refer [render-file]]
             [clojure.java.io :as io]
@@ -192,21 +193,26 @@
 (defmethod generate-examples "distinct"
   [{:keys [limit] :as params}
    ^Model path]
-  (let [examples (retrieve-sample-examples params path)
-        path-map (extract-examples examples)
-        path-data (retrieve-path-data (extract-path-nodes examples) params)
-        distances (compute-distances examples path-map path-data)
-        distance-fn (fn [a b] (get distances (hash-set a b)))
-        chosen-path-iris (vec (greedy-construction (set (keys path-map)) distance-fn limit))
-        chosen-paths (retrieve-chosen-paths (.union examples path-data) chosen-path-iris)]
-    (serialize-examples chosen-paths)))
+  (let [examples (retrieve-sample-examples params path)]
+    (if (.isEmpty examples)
+      {}
+      (let [path-map (extract-examples examples)
+            path-data (retrieve-path-data (extract-path-nodes examples) params)
+            distances (compute-distances examples path-map path-data)
+            distance-fn (fn [a b] (get distances (hash-set a b)))
+            chosen-path-iris (vec (greedy-construction (set (keys path-map)) distance-fn limit))
+            chosen-paths (retrieve-chosen-paths (.union examples path-data) chosen-path-iris)]
+        (serialize-examples chosen-paths)))))
 
 (defmethod generate-examples "representative"
   [{:keys [limit] :as params}
    ^Model path]
-  (let [examples (retrieve-sample-examples params path)
-        path-map (extract-examples examples)
-        path-data (retrieve-path-data (extract-path-nodes examples) params)
-        distances (compute-distances examples path-map path-data)
-        distance-fn (fn [a b] (get distances (hash-set a b)))
-        chosen-path-iris []]))
+  (let [examples (retrieve-sample-examples params path)]
+    (if (.isEmpty examples)
+      {}
+      (let [path-map (extract-examples examples)
+            path-data (retrieve-path-data (extract-path-nodes examples) params)
+            distances (compute-distances examples path-map path-data)
+            distance-fn (fn [a b] (get distances (hash-set a b)))
+            chosen-path-iris (select-k-medoids (set (keys path-map)) distance-fn limit)]
+        ))))
