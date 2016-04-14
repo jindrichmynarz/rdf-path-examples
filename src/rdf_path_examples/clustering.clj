@@ -16,7 +16,9 @@
   [^PersistentHashSet paths
    distance-fn'
    ^Number k]
-  (let [distance-fn (fn [a b] (if (= a b) 0 (distance-fn' a b)))
+  (let [; Wrap distance function, so that it allows to compare the same paths.
+        distance-fn (fn [a b] (if (= a b) 0 (distance-fn' a b)))
+        ; Function for selecting initial medoids
         vj (fn [path]
              (mapsum (fn [i]
                        (/ (distance-fn path i)
@@ -25,17 +27,21 @@
         initial-clusters (into {}
                                (map (comp #(vector % #{}) first)
                                     (take k (sort-by second (map (juxt identity vj) paths)))))
+        ; Path is assigned to the medoid it is closest to. 
         assign-to-cluster (fn [clusters path]
                             (update clusters
                                     (reduce (partial min-key (partial distance-fn path)) (keys clusters))
                                     conj
                                     path))
+        ; Compute the total sum of distances of medoids to the members of their clusters.
         sum-distances (fn [clusters]
                         (mapsum (fn [[medoid members]]
                                   (mapsum (partial distance-fn medoid) members))
                                 clusters))
+        ; Compute the total of distances between the members of a cluster. 
         total-distance (fn [cluster member]
                          (mapsum (partial distance-fn member) cluster))
+        ; Find new medoid from members of a cluster.
         find-new-medoid (fn [[medoid members]]
                           (cond ; If the cluster is empty, return its medoid.
                                 (empty? members) medoid
@@ -44,7 +50,6 @@
                                 ; Otherwise select the members with the minimum total distance to the others
                                 :else (apply min-key (partial total-distance members) members)))
         recluster (fn [clusters]
-                    (log/info clusters)
                     (let [initial-clusters (into {} (map (comp #(vector % #{}) find-new-medoid)
                                                          clusters))]
                       (reduce assign-to-cluster
@@ -57,7 +62,7 @@
             distance-sum (sum-distances clusters)
             new-distance-sum (sum-distances new-clusters)]
         (if (= distance-sum new-distance-sum)
-          (keys clusters)
+          (keys clusters) ; If the total distance stays the same, return the medoids. 
           (recur (if (> distance-sum new-distance-sum) new-clusters clusters)))))))
 
 (defn k-medoids-initialization
