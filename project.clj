@@ -23,8 +23,7 @@
                  [cheshire "5.6.0"]
 
                  [incanter/incanter-core "1.9.0"]
-                 [incanter/incanter-charts "1.9.0"]
-                 [de.lmu.ifi.dbs.elki/elki "0.7.1" :exclusions [net.sf.trove4j/trove4j]]]
+                 [incanter/incanter-charts "1.9.0"]]
   :jvm-opts ["-server"]
   :main rdf-path-examples.core
   :min-lein-version "2.0.0"

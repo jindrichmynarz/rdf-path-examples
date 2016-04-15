@@ -1,10 +1,6 @@
 (ns rdf-path-examples.clustering
-  (:require [rdf-path-examples.distance :refer [wrap-distance-function]]
-            [clojure.set :refer [difference]]
-            [clojure.tools.logging :as log])
-  (:import [de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans KMedoidsPAM]
-           [de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization KMedoidsInitialization]
-           [clojure.lang PersistentHashSet]))
+  (:require [clojure.tools.logging :as log])
+  (:import [clojure.lang PersistentHashSet]))
 
 (defn- mapsum
   "Map function `f` over collection `coll` and sum the results."
@@ -66,20 +62,3 @@
             (keys clusters) ; If the total distance stays the same, return the medoids.
             (recur (if (> distance-sum new-distance-sum) new-clusters clusters)
                    (inc iterations))))))))
-
-(defn k-medoids-initialization
-  [k ids distance-function]
-  (reify KMedoidsInitialization
-    (chooseInitialMedoids [this k ids distance-function])))
-
-(defn k-medoids-pam
-  [paths
-   distance-fn
-   ^Number k
-   & {:keys [maxiter]
-      :or {maxiter 100}}]
-  (let [distance-function (wrap-distance-function distance-fn)]
-    (KMedoidsPAM. distance-function
-                  k
-                  maxiter
-                  (k-medoids-initialization k paths distance-function))))

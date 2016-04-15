@@ -9,8 +9,7 @@
             [clj-time.format :as time-format]
             [clj-time.coerce :as time-coerce]
             [clojure.tools.logging :as log])
-  (:import [de.lmu.ifi.dbs.elki.distance.distancefunction PrimitiveDistanceFunction]
-           [org.joda.time DateTime Period]
+  (:import [org.joda.time DateTime Period]
            [org.joda.time.format DateTimeFormatter]
            [clojure.lang PersistentArrayMap PersistentVector]
            [java.net URI URISyntaxException]))
@@ -297,14 +296,3 @@
   (let [distance-fn (partial compute-distance' resolve-fn property-ranges)
         dispatch-fn (partial dispatch-distance distance-fn)]
     (average (map dispatch-fn a b))))
-
-(defn wrap-distance-function
-  "Wraps distance function `distance-fn` for ELKI."
-  [distance-fn]
-  (reify PrimitiveDistanceFunction
-    (distance [this a b] (distance-fn a b))
-    ;(getInputTypeRestriction [this])
-    ;(instantiate [this])
-    ;(isMetric [this] false) ; FIXME?
-    ;(isSymmetric [this] true)
-    ))
