@@ -16,6 +16,7 @@
            [com.github.jsonldjava.utils JsonUtils]
            [clojure.lang PersistentVector]))
 
+; Distinct and representative selection are both sample-based methods.
 (derive ::distinct ::sample-based)
 (derive ::representative ::sample-based)
 
@@ -146,16 +147,21 @@
                      (comp distance-fn vals)))
          (into {}))))
 
-(defn get-distance-fn
-  "Compute distances between `examples` navigating via `path-map` and using `path-data`
-  with data about path nodes and return a distance function."
-  [^Model examples
-   path-map
+(defn get-distances
+  "Compute distances between examples navigating the `path-map` and using `path-data`."
+  [path-map
    ^Model path-data]
   (let [path-json-ld (json-ld/expand-model path-data)
         resolve-fn (partial find-by-iri path-json-ld)
-        datatype-property-ranges (extract-datatype-property-ranges path-data)
-        distances (path-distances path-map resolve-fn datatype-property-ranges)]
+        datatype-property-ranges (extract-datatype-property-ranges path-data)]
+    (path-distances path-map resolve-fn datatype-property-ranges)))
+
+(defn get-distance-fn
+  "Compute distances between examples navigating the `path-map` and using `path-data`
+  with data about path nodes and return a distance function."
+  [path-map
+   ^Model path-data]
+  (let [distances (get-distances path-map path-data)]
     (fn [a b]
       (if (= a b)
         0
@@ -208,7 +214,7 @@
       {}
       (let [path-map (extract-examples examples)
             path-data (retrieve-path-data (extract-path-nodes examples) params)
-            distance-fn (get-distance-fn examples path-map path-data)
+            distance-fn (get-distance-fn path-map path-data)
             chosen-path-iris (seq (greedy-construction (set (keys path-map)) distance-fn limit))
             chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
         (serialize-examples chosen-paths)))))
@@ -221,7 +227,7 @@
       {}
       (let [path-map (extract-examples examples)
             path-data (retrieve-path-data (extract-path-nodes examples) params)
-            distance-fn (get-distance-fn examples path-map path-data)
+            distance-fn (get-distance-fn path-map path-data)
             chosen-path-iris (select-k-medoids (set (keys path-map)) distance-fn limit)
             chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
         (serialize-examples chosen-paths)))))
