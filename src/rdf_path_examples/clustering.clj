@@ -9,7 +9,10 @@
 
 (defn select-k-medoids
   "Select `k` medoids out of `items` based on the k-medoids clustering
-  using the distance function `distance-fn`."
+  using the distance function `distance-fn`. It uses the algorithm described
+  in PARK, Hae-Sang; JUN, Chi-Hyuck, 2009. A simple and fast algorithm for
+  K-medoids clustering. Expert Systems with Applications. Vol. 36, pp. 3336–3341.
+  DOI 10.1016/j.eswa.2008.01.039."
   [^PersistentHashSet paths
    distance-fn
    ^Number k
