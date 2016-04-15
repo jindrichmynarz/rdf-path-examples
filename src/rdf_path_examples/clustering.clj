@@ -50,8 +50,9 @@
                             ; Otherwise select the members with the minimum total distance to the others
                             (apply min-key (partial total-distance members) members)))
         recluster (fn [clusters]
-                    (let [initial-clusters (into {} (map (comp #(vector % #{}) find-new-medoid)
-                                                         clusters))]
+                    (let [initial-clusters (into {}
+                                                 (map (comp (juxt identity hash-set) find-new-medoid)
+                                                      clusters))]
                       (reduce assign-to-cluster initial-clusters paths)))]
     (loop [clusters (reduce assign-to-cluster initial-clusters paths)
            iterations 0]
