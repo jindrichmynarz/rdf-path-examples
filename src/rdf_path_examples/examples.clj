@@ -144,16 +144,22 @@
                      (comp distance-fn vals)))
          (into {}))))
 
-(defn compute-distances
+(defn get-distance-fn
   "Compute distances between `examples` navigating via `path-map` and using `path-data`
-  with data about path nodes."
+  with data about path nodes and return a distance function."
   [^Model examples
    path-map
    ^Model path-data]
   (let [path-json-ld (json-ld/expand-model path-data)
         resolve-fn (partial find-by-iri path-json-ld)
-        datatype-property-ranges (extract-datatype-property-ranges path-data)]
-    (path-distances path-map resolve-fn datatype-property-ranges)))
+        datatype-property-ranges (extract-datatype-property-ranges path-data)
+        distances (path-distances path-map resolve-fn datatype-property-ranges)]
+    (fn [a b]
+      (if (= a b)
+        0
+        (if-let [distance (get distances (hash-set a b))]
+          distance
+          (throw (IllegalArgumentException. "Distance between resources not found!")))))))
 
 (defn describe-paths
   "Retrieve representations of paths identified by `path-iris` from `data`."
@@ -200,9 +206,8 @@
       {}
       (let [path-map (extract-examples examples)
             path-data (retrieve-path-data (extract-path-nodes examples) params)
-            distances (compute-distances examples path-map path-data)
-            distance-fn (fn [a b] (get distances (hash-set a b)))
-            chosen-path-iris (greedy-construction (set (keys path-map)) distance-fn limit)
+            distance-fn (get-distance-fn examples path-map path-data)
+            chosen-path-iris (seq (greedy-construction (set (keys path-map)) distance-fn limit))
             chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
         (serialize-examples chosen-paths)))))
 
@@ -214,8 +219,7 @@
       {}
       (let [path-map (extract-examples examples)
             path-data (retrieve-path-data (extract-path-nodes examples) params)
-            distances (compute-distances examples path-map path-data)
-            distance-fn (fn [a b] (if (= a b) 0 (get distances (hash-set a b))))
+            distance-fn (get-distance-fn examples path-map path-data)
             chosen-path-iris (select-k-medoids (set (keys path-map)) distance-fn limit)
             chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
         (serialize-examples chosen-paths)))))
