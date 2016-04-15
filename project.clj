@@ -1,4 +1,4 @@
-(defproject rdf-path-examples "0.1.0-SNAPSHOT"
+(defproject rdf-path-examples "0.5.0-SNAPSHOT"
   :description "Generates examples of RDF paths"
   :url "http://github.com/jindrichmynarz/rdf-path-examples"
   :license {:name "Eclipse Public License"
@@ -37,10 +37,10 @@
                                 (pjstadig.humane-test-output/activate!)]
                    :resource-paths ["test/resources"]}
              :uberjar {:aot :all
-                       :omit-source true
-                       :uberjar-name "rdf-path-examples.jar"}}
+                       :omit-source true}}
   :resource-paths ["resources"]
-  :ring {:handler rdf-path-examples.core/app}
+  :ring {:handler rdf-path-examples.core/app
+         :uberwar-name "rdf-path-examples.war"}
   :source-paths ["src"]
   :test-paths ["test"]
   :test-selectors {:default (complement :integration)
