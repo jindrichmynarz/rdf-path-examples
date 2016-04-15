@@ -12,13 +12,12 @@
   (transduce (map f) + coll))
 
 (defn select-k-medoids
-  "Select `k` medoids out of `items` based on the k-medoids clustering."
+  "Select `k` medoids out of `items` based on the k-medoids clustering
+  using the distance function `distance-fn`."
   [^PersistentHashSet paths
-   distance-fn'
+   distance-fn
    ^Number k]
-  (let [; Wrap distance function, so that it allows to compare the same paths.
-        distance-fn (fn [a b] (if (= a b) 0 (distance-fn' a b)))
-        ; Function for selecting initial medoids
+  (let [; Function for selecting initial medoids
         vj (fn [path]
              (mapsum (fn [i]
                        (/ (distance-fn path i)
