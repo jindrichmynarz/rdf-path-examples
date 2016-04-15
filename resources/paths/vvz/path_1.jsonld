@@ -1,0 +1,35 @@
+{
+  "@context": {
+    "@vocab": "https://w3id.org/lodsight/rdf-path#",
+    "gr": "http://purl.org/goodrelations/v1#",
+    "pc": "http://purl.org/procurement/public-contracts#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "edgeProperty": {"@type": "@id"},
+    "edges": {"@container": "@list"}
+  },
+  "@graph": [{
+    "@type": "Path",
+    "edges": [{
+      "start": {"@type": "pc:Contract"},
+      "edgeProperty": "pc:agreedPrice",
+      "end": {"@type": "gr:PriceSpecification"}
+    }, {
+      "start": {"@type": "gr:PriceSpecification"},
+      "edgeProperty": "gr:hasCurrencyValue",
+      "end": {"@type": "xsd:decimal"}
+    }]},
+    {
+      "@id": "gr:PriceSpecification",
+      "@type": "rdfs:Class"
+    },
+    {
+      "@id": "pc:Contract",
+      "@type": "rdfs:Class"
+    },
+    {
+      "@id": "xsd:decimal",
+      "@type": "rdfs:Datatype"
+    }
+  ]
+}
