@@ -26,7 +26,7 @@
                           (mapsum (partial distance-fn i) (disj paths i))))
                      (disj paths path)))
         initial-clusters (into {}
-                               (map (comp #(vector % #{}) first)
+                               (map (comp (juxt identity hash-set) first)
                                     (take k (sort-by second (map (juxt identity vj) paths)))))
         ; Path is assigned to the medoid it is closest to.
         assign-to-cluster (fn [clusters path]
@@ -44,12 +44,11 @@
                          (mapsum (partial distance-fn member) cluster))
         ; Find new medoid from members of a cluster.
         find-new-medoid (fn [[medoid members]]
-                          (cond ; If the cluster is empty, return its medoid.
-                                (empty? members) medoid
-                                ; If there is 1 member in the cluster, return the member.
-                                (= (count members) 1) (first members)
-                                ; Otherwise select the members with the minimum total distance to the others
-                                :else (apply min-key (partial total-distance members) members)))
+                          (if (= (count members) 1)
+                            ; If there is 1 member in the cluster, return the member.
+                            (first members)
+                            ; Otherwise select the members with the minimum total distance to the others
+                            (apply min-key (partial total-distance members) members)))
         recluster (fn [clusters]
                     (let [initial-clusters (into {} (map (comp #(vector % #{}) find-new-medoid)
                                                          clusters))]

@@ -27,4 +27,4 @@
                      #{3 4} 0
                      #{3 5} 0.75
                      #{4 5} 0.75}]
-      (= (k-medoids distances 2) #{1 3}))))
+      (= (k-medoids distances 3) #{1 3 4}))))
