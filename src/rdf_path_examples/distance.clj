@@ -1,7 +1,7 @@
 (ns rdf-path-examples.distance
   (:require [rdf-path-examples.xml-schema :as xsd]
             [rdf-path-examples.type-inference :as infer]
-            [rdf-path-examples.util :refer [duration-regex parse-number]]
+            [rdf-path-examples.util :refer [average duration-regex parse-number]]
             [clj-fuzzy.stemmers :refer [porter]]
             [clj-fuzzy.metrics :refer [jaro-winkler]]
             [clojure.string :as string]
@@ -29,14 +29,6 @@
    [#(.getScheme %) 0.13]])
 
 ; ----- Private functions -----
-
-(defn- average
-  "Compute average of numbers in collection `coll`."
-  [coll]
-  (if (seq coll)
-    (/ (apply + coll)
-       (count coll))
-    0))
 
 (defn- trim-last-char
   "Trim last character in string `s`."

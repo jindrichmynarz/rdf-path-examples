@@ -1,6 +1,14 @@
 (ns rdf-path-examples.util
   (:require [clojure.java.io :as io]))
 
+(defn average
+  "Compute average of numbers in collection `coll`."
+  [coll]
+  (if (seq coll)
+    (/ (apply + coll)
+       (count coll))
+    0))
+
 (def duration-regex
   "Regular expression matching xsd:duration."
   #"^-?P(\d+Y)?(\d+M)?(\d+D)?T?(\d+H)?(\d+M)?(\d+(\.\d+)?S)?$")
