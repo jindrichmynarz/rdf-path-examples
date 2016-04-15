@@ -163,10 +163,12 @@
     (describe-query data query)))
 
 (defn retrieve-chosen-paths
-  "Retrieve chosen path examples identified by `path-iris` from `data`."
-  [^Model data
+  "Retrieve chosen path examples identified by `path-iris` from `examples` and `node-data`."
+  [^Model examples
+   ^Model node-data
    path-iris]
-  (let [query (render-file "sparql/templates/path_node_labels.mustache" {:paths path-iris})]
+  (let [data (.union examples node-data)
+        query (render-file "sparql/templates/path_node_labels.mustache" {:paths path-iris})]
     (.union (describe-paths data path-iris) (construct-query data query))))
 
 (defn serialize-examples
@@ -200,8 +202,8 @@
             path-data (retrieve-path-data (extract-path-nodes examples) params)
             distances (compute-distances examples path-map path-data)
             distance-fn (fn [a b] (get distances (hash-set a b)))
-            chosen-path-iris (vec (greedy-construction (set (keys path-map)) distance-fn limit))
-            chosen-paths (retrieve-chosen-paths (.union examples path-data) chosen-path-iris)]
+            chosen-path-iris (greedy-construction (set (keys path-map)) distance-fn limit)
+            chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
         (serialize-examples chosen-paths)))))
 
 (defmethod generate-examples "representative"
@@ -213,6 +215,7 @@
       (let [path-map (extract-examples examples)
             path-data (retrieve-path-data (extract-path-nodes examples) params)
             distances (compute-distances examples path-map path-data)
-            distance-fn (fn [a b] (get distances (hash-set a b)))
-            chosen-path-iris (select-k-medoids (set (keys path-map)) distance-fn limit)]
-        ))))
+            distance-fn (fn [a b] (if (= a b) 0 (get distances (hash-set a b))))
+            chosen-path-iris (select-k-medoids (set (keys path-map)) distance-fn limit)
+            chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
+        (serialize-examples chosen-paths)))))

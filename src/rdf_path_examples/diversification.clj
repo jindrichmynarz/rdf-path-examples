@@ -21,7 +21,7 @@
            candidates (apply disj paths solutions)
            solutions-count 2]
       (if (= solutions-count n)
-        solutions
+        (vec solutions)
         (let [solution (generate-solution candidates solutions)]
           (recur (conj solutions solution)
                  (disj candidates solution)
