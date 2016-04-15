@@ -6,7 +6,6 @@
             [rdf-path-examples.clustering :refer [select-k-medoids]]
             [rdf-path-examples.util :refer [resource->string]]
             [stencil.core :refer [render-file]]
-            [clojure.java.io :as io]
             [clojure.set :refer [union]]
             [yesparql.sparql :refer [model->json-ld]]
             [cheshire.core :as json]
@@ -16,6 +15,9 @@
   (:import [org.apache.jena.rdf.model Model]
            [com.github.jsonldjava.utils JsonUtils]
            [clojure.lang PersistentVector]))
+
+(derive ::distinct ::sample-based)
+(derive ::representative ::sample-based)
 
 (defonce example-context
   (json-ld/load-context "example.jsonld"))
@@ -193,12 +195,12 @@
   "Generate examples of RDF paths using the chosen selection method."
   (fn [config _] (:selection-method config)))
 
-(defmethod generate-examples "random"
+(defmethod generate-examples ::random
   [params
    ^Model path]
   (serialize-examples (retrieve-examples path "sparql/templates/random.mustache" params)))
 
-(defmethod generate-examples "distinct"
+(defmethod generate-examples ::distinct
   [{:keys [limit] :as params}
    ^Model path]
   (let [examples (retrieve-sample-examples params path)]
@@ -211,7 +213,7 @@
             chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
         (serialize-examples chosen-paths)))))
 
-(defmethod generate-examples "representative"
+(defmethod generate-examples ::representative
   [{:keys [limit] :as params}
    ^Model path]
   (let [examples (retrieve-sample-examples params path)]

@@ -18,7 +18,7 @@
     (is (= (status-code (mock/request :get "/invalid")) 404))))
 
 (deftest ^:integration generate-examples-test
-  (let [valid-params {:selection-method (rand-nth (-> examples/generate-examples methods keys)) 
+  (let [valid-params {:selection-method (name (rand-nth (-> examples/generate-examples methods keys))) 
                       :sparql-endpoint "http://localhost:8890/sparql"}
         generate-examples (fn [& {:keys [accept body content-type method params]
                                   :or {accept jsonld

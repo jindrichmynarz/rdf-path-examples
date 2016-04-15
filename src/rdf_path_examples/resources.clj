@@ -22,6 +22,14 @@
 (def parse-query-params
   (coerce/coercer Config coerce/string-coercion-matcher))
 
+(defn- preprocess-config
+  "Keywordize keys and selection method, and merge with default params."
+  [configuration]
+  (merge default-params
+         (-> configuration
+             keywordize-keys
+             (update :selection-method (partial keyword "rdf-path-examples.examples")))))
+
 (defresource rdf-path-examples
   :allowed-methods [:post]
   :available-media-types ["application/ld+json"]
@@ -52,7 +60,7 @@
                                  :malformed-error (if (instance? ErrorContainer configuration)
                                                     (str error)
                                                     error))]
-                    [false {:request {:params (merge default-params (keywordize-keys configuration))}
+                    [false {:request {:params (preprocess-config configuration)}
                             :rdf-path path}])))
   :new? (constantly false)
   :respond-with-entity? (constantly true))
