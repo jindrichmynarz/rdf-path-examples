@@ -1,0 +1,30 @@
+{
+  "@context" : {
+    "@vocab" : "https://w3id.org/lodsight/rdf-path#",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#",
+    "edgeProperty" : {
+      "@type" : "@id"
+    },
+    "edges" : {
+      "@container" : "@list"
+    }
+  },
+  "@graph" : [ {
+    "@type" : "Path",
+    "edges" : [ {
+      "start" : {
+        "@type" : "http://purl.org/procurement/public-contracts#TendersOpening"
+      },
+      "edgeProperty" : "http://schema.org/location",
+      "end" : {
+        "@type" : "http://schema.org/Place"
+      }
+    } ]
+  }, {
+    "@id" : "http://purl.org/procurement/public-contracts#TendersOpening",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://schema.org/Place",
+    "@type" : "rdfs:Class"
+  } ]
+}

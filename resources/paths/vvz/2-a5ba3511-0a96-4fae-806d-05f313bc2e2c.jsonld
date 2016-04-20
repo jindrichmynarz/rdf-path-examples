@@ -1,0 +1,41 @@
+{
+  "@context" : {
+    "@vocab" : "https://w3id.org/lodsight/rdf-path#",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#",
+    "edgeProperty" : {
+      "@type" : "@id"
+    },
+    "edges" : {
+      "@container" : "@list"
+    }
+  },
+  "@graph" : [ {
+    "@type" : "Path",
+    "edges" : [ {
+      "start" : {
+        "@type" : "http://purl.org/goodrelations/v1#BusinessEntity"
+      },
+      "edgeProperty" : "http://purl.org/procurement/public-contracts#authorityKind",
+      "end" : {
+        "@type" : "http://www.w3.org/2004/02/skos/core#Concept"
+      }
+    }, {
+      "start" : {
+        "@type" : "http://www.w3.org/2004/02/skos/core#Concept"
+      },
+      "edgeProperty" : "http://www.w3.org/2004/02/skos/core#prefLabel",
+      "end" : {
+        "@type" : ""
+      }
+    } ]
+  }, {
+    "@id" : "",
+    "@type" : "rdfs:Datatype"
+  }, {
+    "@id" : "http://purl.org/goodrelations/v1#BusinessEntity",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://www.w3.org/2004/02/skos/core#Concept",
+    "@type" : "rdfs:Class"
+  } ]
+}

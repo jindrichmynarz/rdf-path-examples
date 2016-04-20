@@ -1,0 +1,41 @@
+{
+  "@context" : {
+    "@vocab" : "https://w3id.org/lodsight/rdf-path#",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#",
+    "edgeProperty" : {
+      "@type" : "@id"
+    },
+    "edges" : {
+      "@container" : "@list"
+    }
+  },
+  "@graph" : [ {
+    "@type" : "Path",
+    "edges" : [ {
+      "start" : {
+        "@type" : "http://www.w3.org/ns/adms#Identifier"
+      },
+      "edgeProperty" : "http://purl.org/dc/terms/creator",
+      "end" : {
+        "@type" : "http://purl.org/goodrelations/v1#BusinessEntity"
+      }
+    }, {
+      "start" : {
+        "@type" : "http://purl.org/goodrelations/v1#BusinessEntity"
+      },
+      "edgeProperty" : "http://schema.org/address",
+      "end" : {
+        "@type" : "http://schema.org/PostalAddress"
+      }
+    } ]
+  }, {
+    "@id" : "http://www.w3.org/ns/adms#Identifier",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://purl.org/goodrelations/v1#BusinessEntity",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://schema.org/PostalAddress",
+    "@type" : "rdfs:Class"
+  } ]
+}

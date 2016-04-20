@@ -1,0 +1,52 @@
+{
+  "@context" : {
+    "@vocab" : "https://w3id.org/lodsight/rdf-path#",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#",
+    "edgeProperty" : {
+      "@type" : "@id"
+    },
+    "edges" : {
+      "@container" : "@list"
+    }
+  },
+  "@graph" : [ {
+    "@type" : "Path",
+    "edges" : [ {
+      "start" : {
+        "@type" : "http://purl.org/procurement/public-contracts#Contract"
+      },
+      "edgeProperty" : "http://purl.org/procurement/public-contracts#awardCriteriaCombination",
+      "end" : {
+        "@type" : "http://purl.org/procurement/public-contracts#AwardCriteriaCombination"
+      }
+    }, {
+      "start" : {
+        "@type" : "http://purl.org/procurement/public-contracts#AwardCriteriaCombination"
+      },
+      "edgeProperty" : "http://purl.org/procurement/public-contracts#awardCriterion",
+      "end" : {
+        "@type" : "http://purl.org/procurement/public-contracts#CriterionWeighting"
+      }
+    }, {
+      "start" : {
+        "@type" : "http://purl.org/procurement/public-contracts#CriterionWeighting"
+      },
+      "edgeProperty" : "http://purl.org/procurement/public-contracts#weightedCriterion",
+      "end" : {
+        "@type" : "http://www.w3.org/2004/02/skos/core#Concept"
+      }
+    } ]
+  }, {
+    "@id" : "http://purl.org/procurement/public-contracts#Contract",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://purl.org/procurement/public-contracts#AwardCriteriaCombination",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://purl.org/procurement/public-contracts#CriterionWeighting",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://www.w3.org/2004/02/skos/core#Concept",
+    "@type" : "rdfs:Class"
+  } ]
+}

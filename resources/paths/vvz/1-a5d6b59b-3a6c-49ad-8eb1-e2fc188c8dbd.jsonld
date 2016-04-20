@@ -1,0 +1,30 @@
+{
+  "@context" : {
+    "@vocab" : "https://w3id.org/lodsight/rdf-path#",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#",
+    "edgeProperty" : {
+      "@type" : "@id"
+    },
+    "edges" : {
+      "@container" : "@list"
+    }
+  },
+  "@graph" : [ {
+    "@type" : "Path",
+    "edges" : [ {
+      "start" : {
+        "@type" : "http://www.w3.org/ns/adms#Identifier"
+      },
+      "edgeProperty" : "http://www.w3.org/ns/adms#schemeAgency",
+      "end" : {
+        "@type" : ""
+      }
+    } ]
+  }, {
+    "@id" : "",
+    "@type" : "rdfs:Datatype"
+  }, {
+    "@id" : "http://www.w3.org/ns/adms#Identifier",
+    "@type" : "rdfs:Class"
+  } ]
+}

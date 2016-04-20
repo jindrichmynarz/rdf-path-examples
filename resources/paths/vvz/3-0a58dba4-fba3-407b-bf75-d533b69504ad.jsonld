@@ -1,0 +1,52 @@
+{
+  "@context" : {
+    "@vocab" : "https://w3id.org/lodsight/rdf-path#",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#",
+    "edgeProperty" : {
+      "@type" : "@id"
+    },
+    "edges" : {
+      "@container" : "@list"
+    }
+  },
+  "@graph" : [ {
+    "@type" : "Path",
+    "edges" : [ {
+      "start" : {
+        "@type" : "http://purl.org/procurement/public-contracts#Contract"
+      },
+      "edgeProperty" : "http://purl.org/procurement/public-contracts#awardedTender",
+      "end" : {
+        "@type" : "http://purl.org/procurement/public-contracts#Tender"
+      }
+    }, {
+      "start" : {
+        "@type" : "http://purl.org/procurement/public-contracts#Tender"
+      },
+      "edgeProperty" : "http://purl.org/procurement/public-contracts#offeredPrice",
+      "end" : {
+        "@type" : "http://purl.org/goodrelations/v1#PriceSpecification"
+      }
+    }, {
+      "start" : {
+        "@type" : "http://purl.org/goodrelations/v1#PriceSpecification"
+      },
+      "edgeProperty" : "http://purl.org/goodrelations/v1#hasCurrencyValue",
+      "end" : {
+        "@type" : "http://www.w3.org/2001/XMLSchema#decimal"
+      }
+    } ]
+  }, {
+    "@id" : "http://www.w3.org/2001/XMLSchema#decimal",
+    "@type" : "rdfs:Datatype"
+  }, {
+    "@id" : "http://purl.org/procurement/public-contracts#Contract",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://purl.org/procurement/public-contracts#Tender",
+    "@type" : "rdfs:Class"
+  }, {
+    "@id" : "http://purl.org/goodrelations/v1#PriceSpecification",
+    "@type" : "rdfs:Class"
+  } ]
+}
