@@ -10,7 +10,8 @@
             [liberator.core :refer [defresource]])
   (:import [org.apache.jena.sparql.engine.http QueryExceptionHTTP]
            [org.apache.jena.rdf.model Model]
-           [schema.utils ErrorContainer]))
+           [schema.utils ErrorContainer]
+           [org.apache.jena.riot RiotException]))
 
 (def ^:private default-response
   {:representation {:media-type "application/ld+json"}})
@@ -54,13 +55,14 @@
                          (= content-type "application/ld+json"))
   :malformed? (fn [{{:keys [body query-params]} :request}]
                 (let [configuration (parse-query-params query-params)
-                      path (rdf/json-ld->rdf-model body)]
-                  (if-let [error (or (:error configuration) (validate-path path))]
-                    [true (assoc default-response
-                                 :malformed-error (if (instance? ErrorContainer configuration)
-                                                    (str error)
-                                                    error))]
-                    [false {:request {:params (preprocess-config configuration)}
-                            :rdf-path path}])))
+                      error (:error configuration)
+                      [valid-syntax? path] (try [true (rdf/json-ld->rdf-model body)]
+                                                (catch RiotException ex [false (.getMessage ex)]))]
+                  (cond error [true (assoc default-response :malformed-error (str error))]
+                        (not valid-syntax?) [true (assoc default-response :malformed-error path)]
+                        :else (if-let [error (validate-path path)]
+                                [true (assoc default-response :malformed-error error)]
+                                [false {:request {:params (preprocess-config configuration)}
+                                        :rdf-path path}]))))
   :new? (constantly false)
   :respond-with-entity? (constantly true))
