@@ -1,6 +1,11 @@
 (ns rdf-path-examples.distance-test
   (:require [rdf-path-examples.distance :as distance]
+            [rdf-path-examples.examples :as ex]
             [rdf-path-examples.prefixes :refer [xsd]]
+            [rdf-path-examples.util :refer [resource->input-stream resource->string]]
+            [rdf-path-examples.rdf :refer [json-ld->rdf-model]]
+            [rdf-path-examples.json-ld :as json-ld]
+            [rdf-path-examples.sparql :refer [select-query]]
             [clojure.test :refer :all]
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as prop]
@@ -41,7 +46,15 @@
       (are [a b] (= (distance-fn a b) (distance-fn b a))
            {"@value" 1} {"@value" 3}
            {"@value" "http://example.com/path/to/a/file"} {"@value" "https://example.com/path/to/another/file"}
-           {"@id" "_:b1"} {"@id" "_:b2"}))
+           {"@id" "_:b1"} {"@id" "_:b2"})
+      (let [examples (json-ld->rdf-model (resource->input-stream "examples.jsonld"))
+            path-json-ld (ex/flatten-json-ld-list (json-ld/expand-model examples))
+            property-ranges (ex/extract-datatype-property-ranges examples)
+            resolve-fn (partial ex/find-by-iri path-json-ld)
+            [a b] (map :path (select-query examples (resource->string "random_path_pair.rq")))
+            distance-fn (fn [a b] (distance/compute-distance resolve-fn property-ranges a b))
+            dispatch-fn (fn [a b] (distance/dispatch-distance distance-fn [nil a] [nil b]))]
+        (is (= (dispatch-fn a b) (dispatch-fn b a)))))
     (testing "Mismatching types have maximum distance."
       (are [a b] (== (distance-fn a b) 1)
            {"@type" (xsd "decimal")
@@ -82,7 +95,7 @@
           "Distance of 3 characters is greater than distance of 2 characters.")))
   (let [; Mocked distance function
         distance-fn (fn [resolve-fn a b]
-                      (distance/compute-distance resolve-fn {nil maximum-range} [nil a] [nil b])) 
+                      (distance/compute-distance resolve-fn {nil maximum-range} [nil a] [nil b]))
         referent {"@id" "http://example.com"}]
     (testing "Distance between referents"
       (is (== (distance-fn (fn [_]) referent referent) 0)
@@ -104,7 +117,7 @@
         distance-fn (partial distance/compute-distance (fn []) {nil maximum-range})
         ; Mocked dispatch function
         dispatch-fn (fn [a b] (distance/dispatch-distance distance-fn [nil a] [nil b]))
-        resource {"@value" (rand)}] 
+        resource {"@value" (rand)}]
     (testing "Distance between a resource and the same resource wrapped in a collection is minimal."
       (are [a b] (zero? (dispatch-fn a b))
            resource [resource]
@@ -119,7 +132,7 @@
           [[{"@id" :b} 2] [{"@id" :c} 3]]])))
 
 (defspec maximum-estimation-no-overflow
-  ; Estimated maximum must be greater than the normalized numbers 
+  ; Estimated maximum must be greater than the normalized numbers
   100
   (prop/for-all [[a b] (gen/list-distinct (gen/double* {:infinite? false :NaN? false}) {:num-elements 2})]
                 (let [estimate (distance/estimate-maximum a b)]

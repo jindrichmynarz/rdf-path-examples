@@ -3,7 +3,8 @@
             [rdf-path-examples.prefixes :as prefix]
             [rdf-path-examples.util :refer [duration-regex]]
             [clojure.set :refer [intersection]]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [clojure.tools.logging :as log])
   (:import [java.net URI URISyntaxException]
            [clojure.lang PersistentArrayMap PersistentVector]))
 

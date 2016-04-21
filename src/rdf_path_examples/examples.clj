@@ -10,6 +10,7 @@
             [yesparql.sparql :refer [model->json-ld]]
             [cheshire.core :as json]
             [clojure.math.combinatorics :refer [combinations]]
+            [clojure.walk :refer [postwalk]]
             [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]])
   (:import [org.apache.jena.rdf.model Model]
@@ -109,7 +110,7 @@
              (distance/ordinal->number propertyRange)]
             (catch IllegalArgumentException _ nil)))))
 
-(defn retrieve-path-data
+(defn ^Model retrieve-path-data
   "Retrieve data describing `path-nodes`."
   [path-nodes
    {:keys [graph-iri sparql-endpoint]}]
@@ -147,11 +148,16 @@
                      (comp distance-fn vals)))
          (into {}))))
 
+(defn flatten-json-ld-list
+  "Flatten JSON-LD @list in `path-data` from {:a {@list []}} to {:a []}."
+  [path-data]
+  (postwalk (fn [i] (if (map? i) (if-let [lst (get i "@list")] lst i) i)) path-data))
+
 (defn get-distances
   "Compute distances between examples navigating the `path-map` and using `path-data`."
   [path-map
    ^Model path-data]
-  (let [path-json-ld (json-ld/expand-model path-data)
+  (let [path-json-ld (flatten-json-ld-list (json-ld/expand-model path-data))
         resolve-fn (partial find-by-iri path-json-ld)
         datatype-property-ranges (extract-datatype-property-ranges path-data)]
     (path-distances path-map resolve-fn datatype-property-ranges)))

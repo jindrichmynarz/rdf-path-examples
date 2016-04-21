@@ -1,0 +1,8 @@
+PREFIX : <https://w3id.org/lodsight/rdf-path#>
+
+SELECT DISTINCT ?path
+WHERE {
+  ?path a :Path .
+}
+ORDER BY RAND()
+LIMIT 2

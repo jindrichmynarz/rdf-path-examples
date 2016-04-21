@@ -1,0 +1,114 @@
+{
+  "@context": {
+    "edgeProperty": {
+      "@type": "@id"
+    },
+    "edges": {
+      "@container": "@list"
+    },
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "@vocab": "https://w3id.org/lodsight/rdf-path#"
+  },
+  "@graph": [
+    {
+      "start": {
+        "@id": "http://linked.opendata.cz/resource/business-entity/092b8963-2b42-4f99-be1b-26718dc3dcbb"
+      },
+      "end": {
+        "@id": "http://linked.opendata.cz/resource/vestnikverejnychzakazek.cz/public-contract/365586-7302011065586/authority-kind/1"
+      },
+      "edgeProperty": "http://purl.org/procurement/public-contracts#authorityKind",
+      "@type": "Edge",
+      "@id": "_:b3"
+    },
+    {
+      "start": {
+        "@id": "http://linked.opendata.cz/resource/business-entity/723565a8-2f24-4283-a9ab-68b31e35e307"
+      },
+      "end": {
+        "@id": "http://linked.opendata.cz/resource/vestnikverejnychzakazek.cz/public-contract/374550-7302010074550/authority-kind/1"
+      },
+      "edgeProperty": "http://purl.org/procurement/public-contracts#authorityKind",
+      "@type": "Edge",
+      "@id": "_:b4"
+    },
+    {
+      "start": {
+        "@id": "http://linked.opendata.cz/resource/business-entity/6d7dc97a-29b5-46a4-a8c3-d369d3a014ec"
+      },
+      "end": {
+        "@id": "http://linked.opendata.cz/resource/vestnikverejnychzakazek.cz/public-contract/489367-7403010089367/authority-kind/1"
+      },
+      "edgeProperty": "http://purl.org/procurement/public-contracts#authorityKind",
+      "@type": "Edge",
+      "@id": "_:b5"
+    },
+    {
+      "start": {
+        "@id": "http://linked.opendata.cz/resource/business-entity/9506b982-3654-4db9-a9ab-6d32fec5709a"
+      },
+      "end": {
+        "@id": "http://linked.opendata.cz/resource/vestnikverejnychzakazek.cz/public-contract/490401-7402010090401/authority-kind/1"
+      },
+      "edgeProperty": "http://purl.org/procurement/public-contracts#authorityKind",
+      "@type": "Edge",
+      "@id": "_:b6"
+    },
+    {
+      "start": {
+        "@id": "http://linked.opendata.cz/resource/business-entity/36357060-2251-4224-b1e3-f11da1a0a2d4"
+      },
+      "end": {
+        "@id": "http://linked.opendata.cz/resource/vestnikverejnychzakazek.cz/public-contract/60032178-6003217802001/authority-kind/1"
+      },
+      "edgeProperty": "http://purl.org/procurement/public-contracts#authorityKind",
+      "@type": "Edge",
+      "@id": "_:b8"
+    },
+    {
+      "edges": [
+        {
+          "@id": "_:b8"
+        }
+      ],
+      "@type": "Path",
+      "@id": "https://w3id.org/lodsight/rdf-path/0f5783a5-3db4-4ecd-8e9b-bdd255bd1a41"
+    },
+    {
+      "edges": [
+        {
+          "@id": "_:b6"
+        }
+      ],
+      "@type": "Path",
+      "@id": "https://w3id.org/lodsight/rdf-path/6d2a6421-df1b-4de9-aeac-822042e24d24"
+    },
+    {
+      "edges": [
+        {
+          "@id": "_:b3"
+        }
+      ],
+      "@type": "Path",
+      "@id": "https://w3id.org/lodsight/rdf-path/9358c321-dcf4-405e-b97f-2794703638cd"
+    },
+    {
+      "edges": [
+        {
+          "@id": "_:b4"
+        }
+      ],
+      "@type": "Path",
+      "@id": "https://w3id.org/lodsight/rdf-path/967366d3-3bec-4736-825e-051a02a2bd3f"
+    },
+    {
+      "edges": [
+        {
+          "@id": "_:b5"
+        }
+      ],
+      "@type": "Path",
+      "@id": "https://w3id.org/lodsight/rdf-path/f629f8ef-1dee-4815-aa68-5390c01aa948"
+    }
+  ]
+}
