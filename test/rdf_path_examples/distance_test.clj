@@ -110,7 +110,12 @@
         (is (== (distance-fn resolve-fn
                              {"@id" "http://example.com/1"}
                              {"@id" "http://example.com/2"})
-                0.5))))))
+                0.5))
+        (is (== (distance-fn resolve-fn
+                             {"@id" "http://example.com/3"}
+                             {"@id" "http://example.com/4"})
+                1)
+          "Referents without descriptions have maximum distance.")))))
 
 (deftest dispatch-distance
   (let [; Mocked distance function
