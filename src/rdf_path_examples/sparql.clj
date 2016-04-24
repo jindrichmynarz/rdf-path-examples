@@ -29,8 +29,17 @@
   [literal]
   (update literal "@value" double))
 
-(defmethod literal->clj :default
+(defmethod literal->clj ::xsd/date
   [literal]
+  (update literal "@value" str))
+
+(defmethod literal->clj ::xsd/dateTime
+  [literal]
+  (update literal "@value" str))
+
+(defmethod literal->clj :default
+  [{value "@value"
+    :as literal}]
   literal)
 
 ; ----- Protocols -----
