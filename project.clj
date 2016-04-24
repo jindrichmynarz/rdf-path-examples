@@ -21,9 +21,9 @@
                  [joda-time "2.9.3"]
                  [org.clojure/math.combinatorics "0.1.1"]
                  [cheshire "5.6.0"]
-
                  [incanter/incanter-core "1.9.0"]
-                 [incanter/incanter-charts "1.9.0"]]
+                 [incanter/incanter-charts "1.9.0"]
+                 [org.apache.commons/commons-math3 "3.0"]]
   :jvm-opts ["-server"]
   :main rdf-path-examples.core
   :min-lein-version "2.0.0"
