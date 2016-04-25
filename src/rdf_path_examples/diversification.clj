@@ -1,4 +1,5 @@
 (ns rdf-path-examples.diversification
+  (:require [clojure.tools.logging :as log])
   (:import [clojure.lang PersistentHashSet]))
 
 (defn greedy-construction
