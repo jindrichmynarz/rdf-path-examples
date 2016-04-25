@@ -6,7 +6,8 @@
            [org.apache.jena.query QueryExecutionFactory QueryFactory]
            [org.apache.jena.query Dataset]
            [org.apache.jena.update UpdateAction UpdateFactory]
-           [org.apache.jena.datatypes.xsd XSDDatatype]))
+           [org.apache.jena.datatypes.xsd XSDDatatype]
+           [org.apache.jena.datatypes BaseDatatype$TypedValue]))
 
 ; ----- Multimethods -----
 
@@ -40,7 +41,9 @@
 (defmethod literal->clj :default
   [{value "@value"
     :as literal}]
-  literal)
+  (if (instance? BaseDatatype$TypedValue value)
+    (update literal "@value" #(.lexicalValue %))
+    literal))
 
 ; ----- Protocols -----
 
