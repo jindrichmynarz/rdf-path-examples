@@ -11,7 +11,7 @@
   (:import [org.apache.jena.sparql.engine.http QueryExceptionHTTP]
            [org.apache.jena.rdf.model Model]
            [schema.utils ErrorContainer]
-           [org.apache.jena.riot RiotException]))
+           [org.apache.jena.riot RiotException RiotParseException]))
 
 (def ^:private default-response
   {:representation {:media-type "application/ld+json"}})
@@ -38,6 +38,9 @@
                       (try
                         (throw exception)
                         (catch QueryExceptionHTTP e
+                          (views/error {:status 500
+                                        :error-msg (.getMessage e)}))
+                        (catch RiotParseException e
                           (views/error {:status 500
                                         :error-msg (.getMessage e)}))))
   :handle-malformed (fn [{:keys [malformed-error]
