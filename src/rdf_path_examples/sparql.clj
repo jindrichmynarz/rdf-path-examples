@@ -1,13 +1,13 @@
 (ns rdf-path-examples.sparql
   (:require [rdf-path-examples.xml-schema :as xsd]
             [rdf-path-examples.type-inference :as infer]
+            [rdf-path-examples.prefixes :as prefix]
             [clojure.tools.logging :as log])
   (:import [org.apache.jena.rdf.model Literal Model Resource]
-           [org.apache.jena.query QueryExecutionFactory QueryFactory]
-           [org.apache.jena.query Dataset]
+           [org.apache.jena.query Dataset QueryExecutionFactory QueryFactory]
            [org.apache.jena.update UpdateAction UpdateFactory]
            [org.apache.jena.datatypes.xsd XSDDatatype]
-           [org.apache.jena.datatypes BaseDatatype$TypedValue]))
+           [org.apache.jena.datatypes BaseDatatype$TypedValue DatatypeFormatException]))
 
 ; ----- Multimethods -----
 
@@ -55,8 +55,12 @@
   Literal
   (node->clj [node]
     (let [datatype (.getDatatypeURI node)]
-      (literal->clj (cond-> {"@value" (.getValue node)}
-                      datatype (assoc "@type" datatype)))))
+      (literal->clj (try (cond-> {"@value" (.getValue node)}
+                           datatype (assoc "@type" datatype))
+                         (catch DatatypeFormatException _
+                           ; Treat invalid literals as strings
+                           {"@value" (.getLexicalForm node)
+                            "@type" (prefix/xsd "string")})))))
   
   Resource
   (node->clj [node]
