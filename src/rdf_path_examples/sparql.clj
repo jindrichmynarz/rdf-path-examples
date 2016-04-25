@@ -3,11 +3,12 @@
             [rdf-path-examples.type-inference :as infer]
             [rdf-path-examples.prefixes :as prefix]
             [clojure.tools.logging :as log])
-  (:import [org.apache.jena.rdf.model Literal Model Resource]
+  (:import [org.apache.jena.rdf.model Literal Model ModelFactory Resource]
            [org.apache.jena.query Dataset QueryExecutionFactory QueryFactory]
            [org.apache.jena.update UpdateAction UpdateFactory]
            [org.apache.jena.datatypes.xsd XSDDatatype]
-           [org.apache.jena.datatypes BaseDatatype$TypedValue DatatypeFormatException]))
+           [org.apache.jena.datatypes BaseDatatype$TypedValue DatatypeFormatException]
+           [org.apache.jena.riot RiotParseException]))
 
 ; ----- Multimethods -----
 
@@ -104,7 +105,12 @@
   [^String endpoint
    ^String query]
   (with-open [qexec (QueryExecutionFactory/sparqlService endpoint query)]
-    (.execConstruct qexec)))
+    (try
+      (.execConstruct qexec)
+      ; If there is a non-recoverable syntax error, log it, and return an empty model.
+      (catch RiotParseException ex
+        (log/info (.getMessage ex))
+        (ModelFactory/createDefaultModel)))))
 
 (defn ^Model describe-query
   "Execute SPARQL DESCRIBE `query` on local RDF `model`."
