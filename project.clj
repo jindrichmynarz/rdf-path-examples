@@ -45,4 +45,5 @@
   :test-paths ["test"]
   :test-selectors {:default (complement :integration)
                    :integration :integration
-                   :all (constantly true)})
+                   :all (constantly true)}
+  :uberjar-name "rdf_path_examples.jar")
