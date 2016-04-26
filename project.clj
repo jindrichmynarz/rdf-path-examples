@@ -1,4 +1,4 @@
-(defproject rdf-path-examples "0.5.0-SNAPSHOT"
+(defproject rdf-path-examples "0.6.0"
   :description "Generates examples of RDF paths"
   :url "http://github.com/jindrichmynarz/rdf-path-examples"
   :license {:name "Eclipse Public License"
