@@ -1,5 +1,7 @@
 # rdf-path-examples
 
+> "I knew all these paths once; now they are as twisted as my own ambitions." &mdash The narrator in the [Darkest Dungeon](http://www.darkestdungeon.com)
+
 A web service that generates examples of RDF paths retrieved via a SPARQL endpoint.
 
 ## Usage
