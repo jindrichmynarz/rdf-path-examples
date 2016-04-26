@@ -51,7 +51,7 @@
         generate-fn (fn [path] (try-times number-of-retries (examples/generate-examples params path)))
         clj->rdf-model (comp json-ld->rdf-model string->input-stream json/generate-string)]
     (doall (mapv (comp average
-                       (fn [[path index]] 
+                       (fn [path index]
                          (println (str "Processing path " index "/" path-count))
                          (repeatedly number-of-runs
                                      (comp (partial intra-list-diversity params)
