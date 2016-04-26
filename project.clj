@@ -23,9 +23,10 @@
                  [cheshire "5.6.0"]
                  [incanter/incanter-core "1.9.0"]
                  [incanter/incanter-charts "1.9.0"]
-                 [org.apache.commons/commons-math3 "3.0"]]
+                 [org.apache.commons/commons-math3 "3.0"]
+                 [org.clojure/tools.cli "0.3.3"]]
   :jvm-opts ["-server"]
-  :main rdf-path-examples.core
+  :main rdf-path-examples.evaluation
   :min-lein-version "2.0.0"
   :plugins [[lein-ring "0.9.7"]]
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
