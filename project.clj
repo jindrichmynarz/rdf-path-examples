@@ -20,10 +20,10 @@
                  [clj-time "0.11.0"]
                  [joda-time "2.9.3"]
                  [org.clojure/math.combinatorics "0.1.1"]
-                 [cheshire "5.6.0"]
+                 [cheshire "5.6.1"]
                  [incanter/incanter-core "1.9.0"]
                  [incanter/incanter-charts "1.9.0"]
-                 [org.apache.commons/commons-math3 "3.0"]
+                 [org.apache.commons/commons-math3 "3.6.1"]
                  [org.clojure/tools.cli "0.3.3"]]
   :jvm-opts ["-server"]
   :main rdf-path-examples.evaluation
