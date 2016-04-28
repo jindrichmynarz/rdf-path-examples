@@ -84,11 +84,11 @@
     (if (seq errors)
       (do (println errors) (System/exit 1))
       (let [{:keys [number-of-runs]
-             :as config} (edn/read-string (slurp config))
+             :as params} (edn/read-string (slurp config))
             config-name (.getName (io/as-file config))
-            avg-ilds (compute-avg-ilds config paths :number-of-runs number-of-runs)
+            avg-ilds (compute-avg-ilds params paths :number-of-runs number-of-runs)
             output-name (str (string/replace config-name #"\.[a-z]+$" "")
                              "_"
                              (java.util.UUID/randomUUID)
                              ".edn")]
-        (spit output-name (with-out-str (pprint {:config config :results avg-ilds})))))))
+        (spit output-name (with-out-str (pprint {:config params :results avg-ilds})))))))
