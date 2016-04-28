@@ -8,6 +8,7 @@
             [clojure.edn :as edn]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.pprint :refer [pprint]]
+            [clojure.string :as string]
             [clojure.tools.logging :as log])
   (:import [org.apache.jena.rdf.model Model]
            [java.io ByteArrayInputStream]
@@ -71,19 +72,23 @@
 (def ^:private
   cli-options
   [["-c" "--config CONFIG" "Path to configuration file in EDN"
-    :parse-fn (comp edn/read-string slurp)]
+    :validate [#(.exists (io/as-file %)) "The configuration file doesn't exist!"]]
    ["-p" "--paths PATHS" "Directory containing RDF paths in JSON-LD"
     :validate [#(.exists (io/as-file %)) "The directory with paths doesn't exist!"]]])
 
 (defn -main
   [& args]
-  (let [{{{:keys [number-of-runs]
-           :as config} :config
-           :keys [paths]} :options
+  (let [{{:keys [config paths]} :options
          :keys [errors]} (parse-opts args cli-options)]
     (.addShutdownHook (Runtime/getRuntime) (Thread. shutdown-agents))
     (if (seq errors)
       (do (println errors) (System/exit 1))
-      (let [avg-ilds (compute-avg-ilds config paths :number-of-runs number-of-runs)
-            output-name (str (java.util.UUID/randomUUID) ".edn")]
+      (let [{:keys [number-of-runs]
+             :as config} (edn/read-string (slurp config))
+            config-name (.getName (io/as-file config))
+            avg-ilds (compute-avg-ilds config paths :number-of-runs number-of-runs)
+            output-name (str (string/replace config-name #"\.[a-z]+$" "")
+                             "_"
+                             (java.util.UUID/randomUUID)
+                             ".edn")]
         (spit output-name (with-out-str (pprint {:config config :results avg-ilds})))))))
