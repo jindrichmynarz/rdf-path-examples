@@ -56,7 +56,7 @@
                                                   clj->rdf-model
                                                   (partial generate-fn path))))
         avg-ild-fn (fn [[path-name path] index]
-                     (let [avg-ild (try (repeatedly-generate-fn path index)
+                     (let [avg-ild (try (doall (average (repeatedly-generate-fn path index)))
                                         (catch Exception ex
                                           (log/error (.getMessage ex))
                                           :failed))]
