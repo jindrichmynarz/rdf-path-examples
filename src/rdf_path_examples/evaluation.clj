@@ -12,7 +12,7 @@
   (:import [org.apache.jena.rdf.model Model]
            [java.io ByteArrayInputStream]
            [org.apache.commons.math3.stat.inference MannWhitneyUTest]
-           [org.apache.jena.riot RiotParseException]))
+           [org.apache.jena.riot RiotException]))
 
 (defn- count-pairs
   "Count number of pairs from `n` items."
@@ -45,20 +45,24 @@
              number-of-runs]
       :or {number-of-retries 5
            number-of-runs 10}}]
-  (let [paths (map (comp json-ld->rdf-model io/input-stream)
+  (let [paths (map (juxt #(.getName %) (comp json-ld->rdf-model io/input-stream))
                    (filter #(.isFile %) (file-seq (io/as-file path-dir))))
         path-count (count paths)
         generate-fn (fn [path] (try-times number-of-retries (examples/generate-examples params path)))
-        clj->rdf-model (comp json-ld->rdf-model string->input-stream json/generate-string)]
-    (doall (mapv (comp average
-                       (fn [path index]
-                         (println (str "Processing path " index "/" path-count))
-                         (repeatedly number-of-runs
-                                     (comp (partial intra-list-diversity params)
-                                           clj->rdf-model
-                                           (partial generate-fn path)))))
-                 paths
-                 (range 1 (inc path-count))))))
+        clj->rdf-model (comp json-ld->rdf-model string->input-stream json/generate-string)
+        repeatedly-generate-fn (fn [path index]
+                                (log/info (str "Processing path " index "/" path-count))
+                                (repeatedly number-of-runs
+                                            (comp (partial intra-list-diversity params)
+                                                  clj->rdf-model
+                                                  (partial generate-fn path))))
+        avg-ild-fn (fn [[path-name path] index]
+                     (let [avg-ild (try (repeatedly-generate-fn path index)
+                                        (catch RiotException ex
+                                          (log/error (.getMessage ex))
+                                          :failed))]
+                       [path-name avg-ild]))]
+    (into {} (map avg-ild-fn paths (range 1 (inc path-count))))))
 
 (defn mann-whitney-u-test
   "Compute Mann-Whitney U test between collections of doubles `a` and `b`."
