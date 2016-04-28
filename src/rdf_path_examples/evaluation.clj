@@ -11,8 +11,7 @@
             [clojure.tools.logging :as log])
   (:import [org.apache.jena.rdf.model Model]
            [java.io ByteArrayInputStream]
-           [org.apache.commons.math3.stat.inference MannWhitneyUTest]
-           [org.apache.jena.riot RiotException]))
+           [org.apache.commons.math3.stat.inference MannWhitneyUTest]))
 
 (defn- count-pairs
   "Count number of pairs from `n` items."
@@ -58,7 +57,7 @@
                                                   (partial generate-fn path))))
         avg-ild-fn (fn [[path-name path] index]
                      (let [avg-ild (try (repeatedly-generate-fn path index)
-                                        (catch RiotException ex
+                                        (catch Exception ex
                                           (log/error (.getMessage ex))
                                           :failed))]
                        [path-name avg-ild]))]
