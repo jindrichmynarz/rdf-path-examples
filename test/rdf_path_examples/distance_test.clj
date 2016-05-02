@@ -40,6 +40,7 @@
     (testing "Equivalent resources have no distance."
       (are [resource] (== (distance-fn resource resource) 0)
            {"@value" 1}
+           {"@value" ""}
            {"@value" "2015-12-30"}
            {"@value" "https://example.com:3030/path/to/resource"}))
     (testing "Distance is symmetric"
