@@ -137,6 +137,18 @@
          [[[{"@id" :b} 1] [{"@id" :c} 4]]
           [[{"@id" :b} 2] [{"@id" :c} 3]]])))
 
+(deftest remove-visited
+  (is (= (distance/remove-visited [[[{"@id" :b} {"@id" :d}] [{"@id" :c} 2]]
+                                   [[{"@id" :b} {"@id" :e}] [{"@id" :c} {"@id" :f}]]]
+                                  #{:d})
+         [[[{"@id" :c} 2]]
+          [[{"@id" :c} {"@id" :f}]]])))
+
+; We have a vector with 2 vectors of vector pairs.
+; Vector pair property and object(s).
+; Property is a map.
+; Object(s) can be either a map or a vector of maps.
+
 (defspec maximum-estimation-no-overflow
   ; Estimated maximum must be greater than the normalized numbers
   100
