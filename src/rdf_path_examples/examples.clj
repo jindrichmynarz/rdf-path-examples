@@ -1,5 +1,5 @@
 (ns rdf-path-examples.examples
-  (:require [rdf-path-examples.sparql :refer [construct-query describe-query select-query]]
+  (:require [rdf-path-examples.sparql :refer [construct-query describe-query select-query update-operation]]
             [rdf-path-examples.json-ld :as json-ld]
             [rdf-path-examples.distance :as distance]
             [rdf-path-examples.diversification :refer [greedy-construction]]
@@ -35,6 +35,9 @@
 
 (defonce extract-examples-query
   (resource->string "sparql/extract_examples.rq"))
+
+(defonce remove-cycles-operation
+  (resource->string "sparql/remove_cycles.ru"))
 
 (defn extract-vars
   "Extract variable names from `preprocessed-path`."
@@ -116,8 +119,9 @@
    {:keys [graph-iri sparql-endpoint]}]
   (let [query (render-file "sparql/templates/node_data.mustache"
                            {:graph-iri graph-iri
-                            :nodes path-nodes})]
-    (construct-query sparql-endpoint query)))
+                            :nodes path-nodes})
+        path-data (construct-query sparql-endpoint query)]
+    (update-operation path-data remove-cycles-operation)))
 
 (defn- wrap-types
   "Wraps types of `resource` in array maps"

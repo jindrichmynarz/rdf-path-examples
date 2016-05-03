@@ -161,29 +161,6 @@
                  (select-keys % matching-properties))
           [a b])))
 
-(defn- remove-visited'
-  "Remove visited resources in `visited?` from `object`."
-  [^PersistentHashSet visited?
-   object]
-  (cond (map? object) (when-not (visited? (get object "@id")) object)
-        (vector? object) (seq (remove (fn [{id "@id"}] (visited? id)) object))))
-
-(defn remove-visited
-  "Remove visited resources in `visited` from `a` and `b`."
-  [[^PersistentVector a
-    ^PersistentVector b]
-   ^PersistentHashSet visited]
-  (if (seq visited)
-    [a b] ; Skip work if there are no visited resources
-    (let [filtered (remove (partial some (comp nil? second)) 
-                           (map (comp (fn [[a-p a-o] [b-p b-o]]
-                                        [[a-p (remove-visited' visited a-o)]
-                                         [b-p (remove-visited' visited b-o)]])
-                                      vector)
-                                a b))]
-      [(mapv first filtered)
-       (mapv second filtered)])))
-
 (defmulti compute-distance
   "Compute distance of resources `a` and `b`. Dispatches on the lowest common ancestor
   of the inferred types of the compared resources."
@@ -196,18 +173,16 @@
   [resolve-fn
    property-ranges
    [_ {a "@id"}]
-   [_ {b "@id"}]
-   & {:keys [visited]
-      :or {visited #{}}}]
+   [_ {b "@id"}]]
   ; Comparison by IRI
   (if (= a b)
     0
     ; Comparison by value
     (let [a-desc (resolve-fn a)
           b-desc (resolve-fn b)
-          distance-fn (fn [a b] (compute-distance' resolve-fn property-ranges a b :visited (conj visited a b)))
+          distance-fn (fn [a b] (compute-distance' resolve-fn property-ranges a b))
           dispatch-fn (comp (partial - 1) (partial dispatch-distance distance-fn))]
-      (if-let [[a' b'] (remove-visited (map-overlaps a-desc b-desc) visited)]
+      (if-let [[a' b'] (map-overlaps a-desc b-desc)]
         (let [union-size (- (+ (count a-desc) (count b-desc)) (count a'))
               intersection-size (reduce + (map dispatch-fn a' b'))]
           (/ (- union-size intersection-size)
