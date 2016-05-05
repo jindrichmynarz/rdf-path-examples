@@ -1,0 +1,6 @@
+PREFIX :     <https://w3id.org/lodsight/rdf-path#>
+
+SELECT (COUNT(DISTINCT ?path) AS ?count)
+WHERE {
+  ?path a :Path .
+}

@@ -21,6 +21,9 @@
 (derive ::distinct ::sample-based)
 (derive ::representative ::sample-based)
 
+(defonce count-paths-query
+  (resource->string "sparql/count_paths.rq"))
+
 (defonce example-context
   (json-ld/load-context "example.jsonld"))
 
@@ -38,6 +41,11 @@
 
 (defonce remove-cycles-operation
   (resource->string "sparql/remove_cycles.ru"))
+
+(defn count-paths
+  "Count number of paths in `examples`."
+  [^Model examples]
+  (Integer/parseInt (:count (first (select-query examples count-paths-query)))))
 
 (defn extract-vars
   "Extract variable names from `preprocessed-path`."
@@ -220,22 +228,22 @@
   [{:keys [limit] :as params}
    ^Model path]
   (let [examples (retrieve-sample-examples params path)]
-    (if (.isEmpty examples)
-      {}
-      (let [path-map (extract-examples examples)
-            path-data (retrieve-path-data (extract-path-nodes examples) params)
-            distance-fn (get-distance-fn path-map path-data)
-            chosen-path-iris (seq (greedy-construction (set (keys path-map)) distance-fn limit))
-            chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
-        (serialize-examples chosen-paths)))))
+    (cond (.isEmpty examples) {}
+      (<= (count-paths examples) limit) (serialize-examples examples)
+      :else (let [path-map (extract-examples examples)
+                  path-data (retrieve-path-data (extract-path-nodes examples) params)
+                  distance-fn (get-distance-fn path-map path-data)
+                  chosen-path-iris (seq (greedy-construction (set (keys path-map)) distance-fn limit))
+                  chosen-paths (retrieve-chosen-paths examples path-data chosen-path-iris)]
+              (serialize-examples chosen-paths)))))
 
 (defmethod generate-examples ::representative
   [{:keys [limit] :as params}
    ^Model path]
   (let [examples (retrieve-sample-examples params path)]
-    (if (.isEmpty examples)
-      {}
-      (let [path-map (extract-examples examples)
+    (cond (.isEmpty examples) {}
+      (<= (count-paths examples) limit) (serialize-examples examples)
+      :else (let [path-map (extract-examples examples)
             path-data (retrieve-path-data (extract-path-nodes examples) params)
             distance-fn (get-distance-fn path-map path-data)
             chosen-path-iris (select-k-medoids (set (keys path-map)) distance-fn limit)
