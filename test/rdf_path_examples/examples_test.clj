@@ -93,3 +93,7 @@
 (deftest retrieve-sample-examples
   (testing "Sample paths retrieval generates a syntactically valid SPARQL query."
     (is (valid-template? "sparql/templates/sample_paths.mustache"))))
+
+(deftest count-paths
+  (is (= (examples/count-paths (rdf/turtle->rdf-model "two_paths.ttl")) 2)
+      "Paths are correctly counted."))

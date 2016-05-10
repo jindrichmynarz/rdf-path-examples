@@ -45,7 +45,7 @@
 (defn count-paths
   "Count number of paths in `examples`."
   [^Model examples]
-  (Integer/parseInt (:count (first (select-query examples count-paths-query)))))
+  (get (:count (first (select-query examples count-paths-query))) "@value"))
 
 (defn extract-vars
   "Extract variable names from `preprocessed-path`."
