@@ -28,6 +28,7 @@
   :jvm-opts ["-server"]
   :main rdf-path-examples.evaluation
   :min-lein-version "2.0.0"
+  :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
   :plugins [[lein-ring "0.9.7"]]
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring/ring-mock "0.3.0"]
